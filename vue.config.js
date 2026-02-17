@@ -1,5 +1,6 @@
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
+  //lintOnSave: false, // 关闭 ESLint 警告或错误
   transpileDependencies: true,
   devServer: {
     proxy: {

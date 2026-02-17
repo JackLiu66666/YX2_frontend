@@ -14,7 +14,7 @@ export default {
   methods: {
     // 返回后台首页
     goBack() {
-      this.$router.push('/home')
+      this.$router.push('/admin/home')
     }
   }
 }

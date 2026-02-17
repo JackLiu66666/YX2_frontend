@@ -50,7 +50,7 @@ export default {
             if (res.data.code === 200) {
               this.$message.success('登录成功！')
               // 跳转到后台首页
-              this.$router.push('/home')
+              this.$router.push('/admin/home')
             } else {
               this.$message.error(res.data.msg)
             }

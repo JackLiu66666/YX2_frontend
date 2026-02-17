@@ -30,7 +30,7 @@ export default {
   methods: {
     // 跳转到审核界面
     goToAudit() {
-      this.$router.push("/audit");
+      this.$router.push("/admin/audit");
     },
   },
 };
