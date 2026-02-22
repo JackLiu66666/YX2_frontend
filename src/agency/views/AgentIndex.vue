@@ -4,6 +4,14 @@
       <h1 style="color: #1989fa;">院小二 - 代理商管理系统</h1>
       <div class="user-info">
         欢迎：{{ agentInfo.username }} 
+              <!-- 审核状态标签 -->
+      <el-tag 
+        :type="statusTagType" 
+        size="small" 
+        style="margin-left: 8px; margin-right: 8px;"
+      >
+        {{ statusText }}
+      </el-tag>
         <el-button type="text" @click="handleLogout">退出登录</el-button>
       </div>
     </div>
@@ -17,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed} from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import request from '../../utils/request'
@@ -37,6 +45,18 @@ onMounted(() => {
       query: { redirect: router.currentRoute.value.fullPath }
     })
   }
+})
+
+// 计算属性：标签类型
+// 计算属性：显示文字
+const statusTagType = computed(() => {
+  const map = { 0: 'info', 1: 'warning', 2: 'success', 3: 'danger' }
+  return map[agentInfo.value?.auditStatus] ?? 'info'
+})
+
+const statusText = computed(() => {
+  const map = { 0: '未审核', 1: '待审核', 2: '通过', 3: '不通过' }
+  return map[agentInfo.value?.auditStatus] ?? '未知'
 })
 
 // 退出登录
