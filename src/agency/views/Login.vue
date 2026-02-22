@@ -48,6 +48,8 @@ const handleLogin = () => {
         })
         if (res.code === 200) {
           ElMessage.success(res.msg)
+          // 可选：将用户信息存到localStorage（用于前端显示）
+          localStorage.setItem('loginAgency', JSON.stringify(res.data))
           // 跳转到代理商首页
           router.push('index')
         } else {

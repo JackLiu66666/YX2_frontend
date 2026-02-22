@@ -9,6 +9,7 @@ import adminRoutes from '@/admin/adminRouter.js'
 import icaRoutes from '@/insurance_company_application/icaRouter.js'
 import agencyRoutes from '@/agency/agencyRouter.js'
 
+import { ElMessage } from 'element-plus'
 // 构建主路由
 const routes = [
   {
@@ -43,6 +44,19 @@ router.beforeEach((to, from, next) => {
     document.title = to.meta.title + ' | 院小二管理系统'
   }
   next()
+    // 判断是否需要登录
+  if (to.meta.requiresAuth) {
+    // 从localStorage获取用户信息（仅前端校验，后端仍有拦截）
+    const loginAgent = localStorage.getItem('loginAgency')
+    if (loginAgent) {
+      next() // 已登录，放行
+    } else {
+      ElMessage.warning('请先登录')
+      next('login') // 未登录，跳登录页
+    }
+  } else {
+    next() // 无需登录，放行
+  }
 })
 
 
