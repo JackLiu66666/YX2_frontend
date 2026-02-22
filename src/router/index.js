@@ -43,20 +43,49 @@ router.beforeEach((to, from, next) => {
   if (to.meta.title) {
     document.title = to.meta.title + ' | 院小二管理系统'
   }
-  next()
-    // 判断是否需要登录
-  if (to.meta.requiresAuth) {
-    // 从localStorage获取用户信息（仅前端校验，后端仍有拦截）
-    const loginAgent = localStorage.getItem('loginAgency')
-    if (loginAgent) {
-      next() // 已登录，放行
-    } else {
-      ElMessage.warning('请先登录')
-      next('login') // 未登录，跳登录页
-    }
-  } else {
-    next() // 无需登录，放行
+
+  const loginAgentStr = localStorage.getItem('loginAgency')
+  const isLoggedIn = !!loginAgentStr
+
+  // 登录校验
+  if (to.meta.requiresAuth && !isLoggedIn) {
+    ElMessage.warning('请先登录')
+    next('/agency/login')
+    return
   }
+
+  // 审核状态权限校验（仅在已登录时）
+  if (isLoggedIn && to.meta.requiredStatus !== undefined) {
+    const agentInfo = JSON.parse(loginAgentStr)
+    const userStatus = agentInfo.auditStatus
+
+    // 如果 requiredStatus 是数组，检查是否包含；否则直接比较
+    const required = to.meta.requiredStatus
+    const hasPermission = Array.isArray(required) 
+      ? required.includes(userStatus) 
+      : userStatus === required
+
+    if (!hasPermission) {
+      // 定义状态到路由名称的映射（建议使用命名路由）
+      const routeNameMap = {
+        0: 'AgencyAuditApplication',
+        1: 'AgencyAuditStatus',
+        2: 'AgencyAuditPassMaterials',
+        3: 'AgencyAuditFailReason'
+      }
+      const targetRouteName = routeNameMap[userStatus]
+      if (targetRouteName) {
+        ElMessage.warning('无权限访问该页面，已为您跳转到对应状态页面')
+        next({ name: targetRouteName })
+      } else {
+        // 如果找不到对应路由，跳转到首页（假设首页路由名为 AgencyIndex）
+        next({ name: 'AgencyIndex' })
+      }
+      return
+    }
+  }
+
+  next()
 })
 
 

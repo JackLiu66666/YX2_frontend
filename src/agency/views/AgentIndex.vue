@@ -4,11 +4,12 @@
       <h1 style="color: #1989fa;">院小二 - 代理商管理系统</h1>
       <div class="user-info">
         欢迎：{{ agentInfo.username }} 
-              <!-- 审核状态标签 -->
+      <!-- 审核状态标签 -->
       <el-tag 
         :type="statusTagType" 
         size="small" 
-        style="margin-left: 8px; margin-right: 8px;"
+        style="margin-left: 8px; margin-right: 8px; cursor: pointer;"
+        @click="handleStatusClick"
       >
         {{ statusText }}
       </el-tag>
@@ -47,6 +48,14 @@ onMounted(() => {
   }
 })
 
+// 审核状态与路由的映射关系
+const statusRouteMap = {
+  0: 'audit-application',      // 0：代理商审核申请页面
+  1: 'audit-status',           // 1：代理商审核申请状态页面
+  2: 'audit-pass-materials',   // 2：代理商审核通过的原始资料页
+  3: 'audit-fail-reason'       // 3：查看失败原因页
+}
+
 // 计算属性：标签类型
 // 计算属性：显示文字
 const statusTagType = computed(() => {
@@ -55,9 +64,38 @@ const statusTagType = computed(() => {
 })
 
 const statusText = computed(() => {
-  const map = { 0: '未审核', 1: '待审核', 2: '通过', 3: '不通过' }
+  const map = { 0: '未审核', 1: '待审核', 2: '审核通过', 3: '审核不通过' }
   return map[agentInfo.value?.auditStatus] ?? '未知'
 })
+
+// 点击状态标签的处理函数（核心逻辑）
+const handleStatusClick = () => {
+  // 获取当前用户的审核状态
+  const currentStatus = agentInfo.value?.auditStatus;
+  if (currentStatus === undefined || currentStatus === null) {
+    ElMessage.error('用户审核状态未获取，请重新登录');
+    router.push('login');
+    return;
+  }
+
+  // 权限校验：用户只能访问与自己当前审核状态匹配的页面
+  const targetRoute = statusRouteMap[currentStatus];
+  
+  // 如果用户尝试访问的不是自己权限内的页面（这里是点击标签时自动匹配，所以主要防手动输入路由）
+  // 补充：如果需要防手动访问，可在路由守卫中再校验，这里先做点击时的校验
+  if (targetRoute) {
+    router.push(targetRoute).catch(err => {
+      if (err.name !== 'NavigationDuplicated') {
+        ElMessage.error('页面跳转失败');
+        console.error('路由跳转错误：', err);
+      }
+    });
+  } else {
+    ElMessage.warning('暂无对应页面权限，请联系管理员');
+    // 重定向到首页（或默认页面）
+    router.push('index');
+  }
+}
 
 // 退出登录
 const handleLogout = async () => {
