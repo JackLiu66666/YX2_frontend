@@ -2,10 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 // 导入两个模块的根组件（每个模块的 App.vue）
 import AdminApp from '@/admin/App.vue'
 import IcaApp from '@/insurance_company_application/App.vue'
+import AgencyApp from '@/agency/App.vue'
 
 // 导入模块的路由配置数组
 import adminRoutes from '@/admin/adminRouter.js'
 import icaRoutes from '@/insurance_company_application/icaRouter.js'
+import agencyRoutes from '@/agency/agencyRouter.js'
 
 // 构建主路由
 const routes = [
@@ -18,6 +20,11 @@ const routes = [
     path: '/ica',
     component: IcaApp,
     children: icaRoutes     // 直接使用
+  },
+  {
+    path: '/agency',
+    component: AgencyApp,
+    children: agencyRoutes
   },
   {
     path: '/',

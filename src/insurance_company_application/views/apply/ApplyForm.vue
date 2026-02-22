@@ -210,7 +210,13 @@ const handleSealUpload = (file) => {
   return false // 阻止自动上传
 }
 
-// 提交表单
+const fileUpload1 = ref(null)
+const fileUpload2 = ref(null)
+const fileUpload3 = ref(null)
+const fileUpload4 = ref(null)
+const fileUpload5 = ref(null)
+const fileUpload6 = ref(null)
+
 const submitForm = async () => {
   try {
     await formRef.value.validate()
@@ -235,14 +241,13 @@ const submitForm = async () => {
     
     // 上传其他附件
     const fileUploads = [
-      ref.fileUpload1,
-      ref.fileUpload2,
-      ref.fileUpload3,
-      ref.fileUpload4,
-      ref.fileUpload5,
-      ref.fileUpload6
+      fileUpload1,
+      fileUpload2,
+      fileUpload3,
+      fileUpload4,
+      fileUpload5,
+      fileUpload6
     ]
-    
     for (const upload of fileUploads) {
       if (upload.value && upload.value.file) {
         await uploadFile(applyId.value, upload.value.file)
@@ -255,7 +260,7 @@ const submitForm = async () => {
       {
         confirmButtonText: '前往查询',
         callback: () => {
-          router.push('ica/apply/query')
+          router.push('query')
         }
       }
     )
