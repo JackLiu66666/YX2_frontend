@@ -11,6 +11,8 @@ const app = createApp(App)
 //axios.defaults.baseURL = 'http://localhost:8081'
 
 // 将 axios 挂载到全局属性（方便在组件内通过 this.$http 访问）
+// 设置全局默认配置
+axios.defaults.withCredentials = true
 app.config.globalProperties.$axios = axios
 
 // 使用插件

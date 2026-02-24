@@ -4,7 +4,8 @@ import { ElMessage } from 'element-plus'
 // 创建axios实例
 const service = axios.create({
   baseURL: 'http://localhost:8081/api/v1',
-  timeout: 5000
+  timeout: 5000,
+  withCredentials: true
 })
 
 // 请求拦截器
