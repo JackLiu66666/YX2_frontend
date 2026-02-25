@@ -50,8 +50,8 @@
             </el-col>
           </el-row>
 
-          <el-form-item label="许可证有效期" prop="licenseValid">
-            <el-date-picker v-model="licenseValidRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" @change="handleDateRangeChange" />
+          <el-form-item label="许可证有效期" prop="licenseValidRange">
+            <el-date-picker v-model="applicationForm.licenseValidRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" />
           </el-form-item>
 
           <!-- 法定代表人信息 -->
@@ -170,6 +170,7 @@ import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import request from "../../../utils/request";
+import dayjs from 'dayjs'
 
 const router = useRouter();
 const applicationFormRef = ref(null);
@@ -183,8 +184,7 @@ const applicationForm = reactive({
   registeredAddress: "",
   agencyType: "",
   businessLicenseNo: "",
-  licenseValidStart: "",
-  licenseValidEnd: "",
+  licenseValidRange: [],
   legalPersonName: "",
   legalPersonIdCard: "",
   legalPersonPhone: "",
@@ -203,7 +203,7 @@ const applicationForm = reactive({
 });
 
 // 有效期范围（临时存储）
-const licenseValidRange = ref([]);
+//const licenseValidRange = ref([]);
 // 盖章文件列表
 const sealFileList = ref([]);
 
@@ -217,7 +217,7 @@ const formRules = reactive({
   registeredAddress: [{ required: true, message: "请输入注册地址", trigger: "blur" }],
   agencyType: [{ required: true, message: "请选择机构类型", trigger: "change" }],
   businessLicenseNo: [{ required: true, message: "请输入经营许可证/备案号", trigger: "blur" }],
-  licenseValid: [{ required: true, message: "请选择许可证有效期", trigger: "change" }],
+  licenseValidRange: [{ required: true, message: "请选择许可证有效期", trigger: "change" }],
   legalPersonName: [{ required: true, message: "请输入法定代表人姓名", trigger: "blur" }],
   legalPersonIdCard: [
     { required: true, message: "请输入法定代表人身份证号", trigger: "blur" },
@@ -251,13 +251,6 @@ const goBack = () => {
   router.push("index");
 };
 
-// 处理有效期范围选择
-const handleDateRangeChange = (val) => {
-  if (val && val.length === 2) {
-    applicationForm.licenseValidStart = val[0];
-    applicationForm.licenseValidEnd = val[1];
-  }
-};
 
 // 处理文件选择
 const handleFileChange = (file) => {
@@ -293,16 +286,30 @@ const submitApplication = async () => {
 
     submitting.value = true;
 
-    // 3. 构建FormData
+    // 3. 复制表单数据（避免直接修改原响应式对象）
+    const submitData = { ...applicationForm };
+
+    // 4. 格式化所有日期字段
+    // 格式化 applyDate
+    if (submitData.applyDate) {
+      submitData.applyDate = dayjs(submitData.applyDate).format('YYYY-MM-DD');
+    }
+
+    // 处理许可证有效期范围：拆分为开始和结束日期，并格式化
+    if (submitData.licenseValidRange && submitData.licenseValidRange.length === 2) {
+      submitData.licenseValidStart = dayjs(submitData.licenseValidRange[0]).format('YYYY-MM-DD');
+      submitData.licenseValidEnd = dayjs(submitData.licenseValidRange[1]).format('YYYY-MM-DD');
+    }
+    // 删除不再需要的 licenseValidRange 字段
+    delete submitData.licenseValidRange;
+    // 5. 构建 FormData（关键修改：使用 submitData）
     const formData = new FormData();
-    // 遍历表单数据
-    for (const key in applicationForm) {
+    for (const key in submitData) {
       if (key !== "sealFile") {
-        formData.append(key, applicationForm[key]);
+        formData.append(key, submitData[key]);
       }
     }
-    // 添加文件
-    formData.append("sealFile", applicationForm.sealFile);
+    formData.append("sealFile", submitData.sealFile); // 或 applicationForm.sealFile
 
     // 4. 提交请求
     const res = await request.post("/agencyAuditApplication/submit", formData, {
