@@ -3,16 +3,16 @@
     <div class="header">
       <h1 style="color: #1989fa;">院小二 - 代理商管理系统</h1>
       <div class="user-info">
-        欢迎：{{ agentInfo.username }} 
-      <!-- 审核状态标签 -->
-      <el-tag 
-        :type="statusTagType" 
-        size="small" 
-        style="margin-left: 8px; margin-right: 8px; cursor: pointer;"
-        @click="handleStatusClick"
-      >
-        {{ statusText }}
-      </el-tag>
+        欢迎：{{ agentInfo?.username || '加载中...' }}
+        <el-tag 
+          :type="statusTagType" 
+          size="small" 
+          style="margin-left: 8px; margin-right: 8px; cursor: pointer;"
+          :class="{ 'is-disabled': loading }"
+          @click="!loading && handleStatusClick()"
+        >
+          {{ loading ? '加载中' : statusText }}
+        </el-tag>
         <el-button type="text" @click="handleLogout">退出登录</el-button>
       </div>
     </div>
@@ -34,27 +34,27 @@ import request from '../../utils/request'
 const router = useRouter()
 const agentInfo = ref({})
 
-// 初始化：获取本地存储的用户信息
-onMounted(() => {
-  const info = localStorage.getItem('loginAgency')
-  if (info) {
-    agentInfo.value = JSON.parse(info)
-  } else {
-    // 没有登录信息，跳转到登录页，并携带当前路径以便登录后返回
-    router.push({
-      path: 'login',
-      query: { redirect: router.currentRoute.value.fullPath }
-    })
+const loading = ref(true) // 加载状态
+
+onMounted(async () => {
+  try {
+    const response = await request.get('/agency/index')
+    if (response.code === 200) {
+      agentInfo.value = response.data.agency 
+    } else {
+      ElMessage.error('获取用户信息失败')
+    }
+  } catch (error) {
+    ElMessage.error('网络错误，请稍后重试')
+    // 如果请求失败，可能需要跳转登录
+    if (error.response?.status === 401) {
+      router.push('login')
+    }
+  } finally {
+    loading.value = false
   }
 })
 
-// 审核状态与路由的映射关系
-const statusRouteMap = {
-  0: 'audit-application',      // 0：代理商审核申请页面
-  1: 'audit-status',           // 1：代理商审核申请状态页面
-  2: 'audit-pass-materials',   // 2：代理商审核通过的原始资料页
-  3: 'audit-fail-reason'       // 3：查看失败原因页
-}
 
 // 计算属性：标签类型
 // 计算属性：显示文字
@@ -70,30 +70,28 @@ const statusText = computed(() => {
 
 // 点击状态标签的处理函数（核心逻辑）
 const handleStatusClick = () => {
-  // 获取当前用户的审核状态
-  const currentStatus = agentInfo.value?.auditStatus;
-  if (currentStatus === undefined || currentStatus === null) {
-    ElMessage.error('用户审核状态未获取，请重新登录');
-    router.push('login');
-    return;
+  if (loading.value) {
+    ElMessage.info('正在加载用户信息，请稍后...')
+    return
   }
-
-  // 权限校验：用户只能访问与自己当前审核状态匹配的页面
-  const targetRoute = statusRouteMap[currentStatus];
-  
-  // 如果用户尝试访问的不是自己权限内的页面（这里是点击标签时自动匹配，所以主要防手动输入路由）
-  // 补充：如果需要防手动访问，可在路由守卫中再校验，这里先做点击时的校验
+  const currentStatus = agentInfo.value?.auditStatus
+  if (currentStatus === undefined || currentStatus === null) {
+    ElMessage.error('用户审核状态未获取，请重新登录')
+    router.push('login')
+    return
+  }
+  // 根据状态跳转对应页面
+  const routeMap = {
+    0: 'AgencyAuditApplication',
+    1: 'AgencyAuditStatus',
+    2: 'AgencyAuditPassMaterials',
+    3: 'AgencyAuditFailReason'
+  }
+  const targetRoute = routeMap[currentStatus]
   if (targetRoute) {
-    router.push(targetRoute).catch(err => {
-      if (err.name !== 'NavigationDuplicated') {
-        ElMessage.error('页面跳转失败');
-        console.error('路由跳转错误：', err);
-      }
-    });
+    router.push({ name: targetRoute })
   } else {
-    ElMessage.warning('暂无对应页面权限，请联系管理员');
-    // 重定向到首页（或默认页面）
-    router.push('index');
+    ElMessage.warning('未知状态，无法跳转')
   }
 }
 
