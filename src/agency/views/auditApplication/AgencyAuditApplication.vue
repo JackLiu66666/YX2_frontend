@@ -159,6 +159,10 @@
           <el-form-item class="submit-btn">
             <el-button type="primary" @click="submitApplication" :loading="submitting">提交申请</el-button>
           </el-form-item>
+          <el-form-item class="test-btn">
+            <el-button type="info" @click="fillTestData" style="margin-bottom: 16px">填充测试数据</el-button>
+            
+          </el-form-item>
         </el-form>
       </el-card>
     </div>
@@ -202,8 +206,6 @@ const applicationForm = reactive({
   applyDate: new Date(),
 });
 
-// 有效期范围（临时存储）
-//const licenseValidRange = ref([]);
 // 盖章文件列表
 const sealFileList = ref([]);
 
@@ -262,8 +264,11 @@ const handleFileChange = (file) => {
 const checkApplied = async () => {
   try {
     const res = await request.get("/agencyAuditApplication/check-applied");
-    if (res.data.code === 200) {
-      hasApplied.value = res.data.data;
+    if (res.code === 200) {
+      hasApplied.value = res.data;
+      if (hasApplied.value) {
+        goBack();
+      }
     }
   } catch (error) {
     ElMessage.error("检查申请状态失败：" + error.message);
@@ -319,16 +324,17 @@ const submitApplication = async () => {
     });
 
     // 5. 处理结果
-    if (res.data.code === 200) {
-      ElMessage.success(res.data.msg);
-      checkApplied(); // 刷新申请状态
+    if (res.code === 200) {
+      ElMessage.success(res.msg);
+      checkApplied();
+      goBack();
     } else {
-      ElMessage.error(res.data.msg);
+      ElMessage.error(res.msg);
     }
   } catch (error) {
     if (error.message !== "cancel") {
       // 排除取消确认的情况
-      ElMessage.error("提交失败：" + (error.response?.data?.msg || error.message));
+      ElMessage.error("提交失败：" + (error.response?.msg || error.message));
     }
   } finally {
     submitting.value = false;
@@ -339,6 +345,42 @@ const submitApplication = async () => {
 onMounted(() => {
   checkApplied();
 });
+
+//测试部分
+const fillTestData = () => {
+  // 使用 Object.assign 批量更新 reactive 对象的属性
+  Object.assign(applicationForm, {
+    agencyFullName: '云测科技有限公司',
+    socialCreditCode: '91310115MA1H2Y9P6X',
+    registeredAddress: '上海市浦东新区松涛路666号',
+    agencyType: '保险代理',                // 改为与选项匹配的值
+    businessLicenseNo: '沪B2-20230123',
+    licenseValidRange: [
+      new Date(),
+      dayjs().add(1, 'year').toDate()
+    ],
+    legalPersonName: '张明',
+    legalPersonIdCard: '110101199001011234',
+    legalPersonPhone: '13800138000',
+    contactPersonName: '李芳',
+    contactPersonPosition: '市场总监',
+    contactPersonPhone: '13912345678',
+    contactPersonEmail: 'lifang@yhence.com',
+    contactPersonOfficePhone: '021-12345678', // 如果有此字段
+    companyFixedPhone: '021-12345678',
+    businessScope: '软件代理销售、技术咨询服务',
+    cooperationArea: '本市',                 // 改为字符串，与 select 选项一致
+    cooperationMode: '代理分成',
+    authenticityCommitment: '1',             // 改为字符串 "1"，与 radio 的 label 匹配
+    sealFile: null,
+    applyDate: new Date(),
+  });
+
+  // 清空文件列表（如果之前有文件）
+  sealFileList.value = [];
+
+  ElMessage.info('测试数据已填充，请手动选择盖章文件后提交');
+};
 </script>
 
 <style scoped>

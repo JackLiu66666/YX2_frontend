@@ -10,6 +10,7 @@ import icaRoutes from '@/insurance_company_application/icaRouter.js'
 import agencyRoutes from '@/agency/agencyRouter.js'
 
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 // 构建主路由
 const routes = [
   {
@@ -39,52 +40,59 @@ const router = createRouter({
 })
 
 // 全局路由守卫 - 设置页面标题
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  // 1. 先检查本地是否有登录标识（快速筛选）
   if (to.meta.title) {
     document.title = to.meta.title + ' | 院小二管理系统'
   }
 
-  const loginAgentStr = localStorage.getItem('loginAgency')
-  const isLoggedIn = !!loginAgentStr
+  // 2. 如果路由需要特定审核状态，则请求后端获取真实状态
+  // 2. 如果路由需要特定审核状态，则请求后端获取真实状态
+  if (to.meta.requiredStatus !== undefined) {
+    try {
+      // 调用新接口获取 auditStatus
+      const res = await request.get('/agencyAuditApplication/audit-status')
+      // 假设返回格式为 { code: 200, data: { auditStatus: 1 } }
+      const realStatus = res.data
 
-  // 登录校验
-  if (to.meta.requiresAuth && !isLoggedIn) {
-    ElMessage.warning('请先登录')
-    next('/agency/login')
-    return
-  }
+      // 可选：更新本地存储的 auditStatus（用于其他地方展示）
+      const localAgent = JSON.parse(localStorage.getItem('loginAgency') || '{}')
+      localAgent.auditStatus = realStatus
+      localStorage.setItem('loginAgency', JSON.stringify(localAgent))
 
-  // 审核状态权限校验（仅在已登录时）
-  if (isLoggedIn && to.meta.requiredStatus !== undefined) {
-    const agentInfo = JSON.parse(loginAgentStr)
-    const userStatus = agentInfo.auditStatus
+      // 判断权限
+      const required = to.meta.requiredStatus
+      const hasPermission = Array.isArray(required)
+        ? required.includes(realStatus)
+        : realStatus === required
 
-    // 如果 requiredStatus 是数组，检查是否包含；否则直接比较
-    const required = to.meta.requiredStatus
-    const hasPermission = Array.isArray(required) 
-      ? required.includes(userStatus) 
-      : userStatus === required
-
-    if (!hasPermission) {
-      // 定义状态到路由名称的映射（建议使用命名路由）
-      const routeNameMap = {
-        0: 'AgencyAuditApplication',
-        1: 'AgencyAuditStatus',
-        2: 'AgencyAuditPassMaterials',
-        3: 'AgencyAuditFailReason'
+      if (!hasPermission) {
+        // 跳转到对应状态页面
+        const routeNameMap = {
+          0: 'AgencyAuditApplication',
+          1: 'AgencyAuditStatus',
+          2: 'AgencyAuditPassMaterials',
+          3: 'AgencyAuditFailReason'
+        }
+        const target = routeNameMap[realStatus] || 'AgencyIndex'
+        ElMessage.warning('您的账号状态与当前页面不匹配，已为您跳转')
+        next({ name: target })
+        return
       }
-      const targetRouteName = routeNameMap[userStatus]
-      if (targetRouteName) {
-        ElMessage.warning('无权限访问该页面，已为您跳转到对应状态页面')
-        next({ name: targetRouteName })
+    } catch (error) {
+      // 请求失败（可能是 401 或网络错误）
+      if (error.response?.status === 401) {
+        // session 过期，清除本地存储并跳转登录
+        localStorage.removeItem('loginAgency')
+        ElMessage.warning('登录已过期，请重新登录')
+        next('/agency/login')
       } else {
-        // 如果找不到对应路由，跳转到首页（假设首页路由名为 AgencyIndex）
-        next({ name: 'AgencyIndex' })
+        // 其他错误，可以跳转到错误页或继续（但为了安全建议重新登录）
+        next('/agency/login')
       }
       return
     }
   }
-
   next()
 })
 
