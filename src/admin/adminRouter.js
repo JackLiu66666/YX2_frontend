@@ -1,13 +1,10 @@
 //import { createRouter, createWebHistory } from 'vue-router'
 import LoginPage from './views/LoginPage.vue'
 import HomePage from './views/HomePage.vue'
-import AuditPage from './views/AuditPage.vue'
+import AgencyAuditPage from './views/AgencyAuditPage.vue'
+import InsuranceCompanyAuditPage from './views/InsuranceCompanyAuditPage.vue'
 
 const adminRoutes = [
-  // {
-  //   path: '/',
-  //   redirect: '/login'   // 默认跳转到登录页
-  // },
   {
     path: 'login',
     name: 'Login Page',
@@ -19,9 +16,14 @@ const adminRoutes = [
     component: HomePage
   },
   {
-    path: 'audit',
-    name: 'Audit Page',
-    component: AuditPage
+    path: 'agencyAudit',
+    name: 'Agency Audit Page',
+    component: AgencyAuditPage
+  },
+  {
+    path: 'insuranceCompanyAudit',
+    name: 'Insurance Company Audit Page',
+    component: InsuranceCompanyAuditPage
   }
 ]
 
