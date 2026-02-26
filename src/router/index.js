@@ -2,10 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 // 导入两个模块的根组件（每个模块的 App.vue）
 import AdminApp from '@/admin/App.vue'
 import AgencyApp from '@/agency/App.vue'
+import InsuranceCompanyApp from '@/insurance_company/App.vue'
 
 // 导入模块的路由配置数组
 import adminRoutes from '@/admin/adminRouter.js'
 import agencyRoutes from '@/agency/agencyRouter.js'
+import insuranceCompanyRoutes from '@/insurance_company/insuranceCompanyRouter.js'
 
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
@@ -14,12 +16,17 @@ const routes = [
   {
     path: '/admin',
     component: AdminApp,
-    children: adminRoutes   // 直接使用，因为路径已经是相对路径
+    children: adminRoutes
   },
   {
     path: '/agency',
     component: AgencyApp,
     children: agencyRoutes
+  },
+  {
+    path: '/insurance_company',
+    component: InsuranceCompanyApp,
+    children: insuranceCompanyRoutes
   },
   {
     path: '/',

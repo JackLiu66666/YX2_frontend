@@ -14,12 +14,12 @@ const agencyRoutes = [
   },
   {
     path: 'login',
-    name: 'Login',
+    name: 'AgencyLogin',
     component: Login
   },
   {
     path: 'register',
-    name: 'Register',
+    name: 'AgencyRegister',
     component: Register
   },
   {

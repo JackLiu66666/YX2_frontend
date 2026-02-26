@@ -2,11 +2,11 @@
   <div class="audit-status-page">
     <div class="page-header">
       <el-button type="primary" @click="goBack">返回首页</el-button>
-      <h1>代理商审核申请状态页面</h1>
+      <h1>保险公司审核申请状态页面</h1>
     </div>
     <div class="page-content">
       <el-card shadow="hover">
-        <p>该页面展示代理商待审核状态的进度信息，后续可开发审核进度跟踪、审核人员信息、预计完成时间等功能。</p>
+        <p>该页面展示保险公司待审核状态的进度信息，后续可开发审核进度跟踪、审核人员信息、预计完成时间等功能。</p>
       </el-card>
     </div>
   </div>
@@ -20,7 +20,7 @@ const router = useRouter()
 
 // 返回首页
 const goBack = () => {
-  router.push('/agency/index')
+  router.push('index')
 }
 </script>
 

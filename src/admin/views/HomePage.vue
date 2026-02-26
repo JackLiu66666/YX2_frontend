@@ -45,6 +45,7 @@ export default {
       try {
         const res = await request.post('/admin/logout');
         if (res.code === 200) { 
+          this.$message.success('退出成功！')
           // 跳转到登录页
           this.$router.push('login');
         } else {
