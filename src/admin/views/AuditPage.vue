@@ -1,42 +1,199 @@
 <template>
   <div class="audit-container">
+    <!-- 顶部返回按钮 -->
+    <div class="header">
+      <el-button 
+        type="primary" 
+        icon="el-icon-arrow-left" 
+        @click="goBack"
+        class="back-btn"
+      >
+        返回
+      </el-button>
+      <h2 class="page-title">代理商申请列表</h2>
+    </div>
+
+    <!-- 列表卡片 -->
     <el-card class="audit-card">
-      <h1>审核界面</h1>
-      <p>这里是院小二系统的审核功能区域，后续可扩展具体审核逻辑</p>
-      <el-button type="default" @click="goBack" style="margin-top: 20px">返回首页</el-button>
+      <!-- 列表表格 -->
+      <el-table 
+        v-loading="loading" 
+        :data="applyList" 
+        border 
+        stripe 
+        style="width: 100%"
+        :header-cell-style="{background: '#e8f4fc', color: '#1989fa'}"
+      >
+        <el-table-column 
+          prop="id" 
+          label="申请ID" 
+          align="center" 
+          width="120"
+        />
+        <el-table-column 
+          prop="agencyFullName" 
+          label="代理商全称" 
+          align="center" 
+          min-width="300"
+        />
+        <el-table-column 
+          label="审核状态" 
+          align="center" 
+          width="180"
+        >
+          <template #default="scope">
+            <el-tag 
+              :type="getStatusTagType(scope.row.auditStatus)" 
+              size="medium"
+            >
+              {{ getStatusText(scope.row.auditStatus) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页组件 -->
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[20, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          background
+        />
+      </div>
     </el-card>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Audit',
-  methods: {
-    // 返回后台首页
-    goBack() {
-      this.$router.push('/admin/home')
+<script setup>
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+import request from '@/utils/request'
+
+const router = useRouter()
+
+// 响应式数据
+const loading = ref(false) // 加载状态
+const currentPage = ref(1) // 当前页
+const pageSize = ref(20)    // 每页条数
+const total = ref(0)       // 总条数
+const applyList = ref([])  // 申请列表数据
+
+// 返回首页
+const goBack = () => {
+  router.push('home')
+}
+
+// 审核状态标签类型映射
+const getStatusTagType = (status) => {
+  const map = { 0: 'info', 1: 'warning', 2: 'success', 3: 'danger' }
+  return map[status] ?? 'info'
+}
+
+// 审核状态文本映射
+const getStatusText = (status) => {
+  const map = { 0: '未审核', 1: '待审核', 2: '审核通过', 3: '审核不通过' }
+  return map[status] ?? '未知'
+}
+
+// 获取申请列表数据
+const getApplyList = async () => {
+  loading.value = true
+  try {
+    const res = await request.get('/admin/agencyApplicationReview/list', {
+      params: {
+        current: currentPage.value,
+        size: pageSize.value
+      },
+      // 携带cookie（兼容session登录态）
+      withCredentials: true
+    })
+    if (res.code === 200) {
+      applyList.value = res.data.records
+      total.value = res.data.total
+    } else {
+      ElMessage.error(res.msg || '获取列表失败')
     }
+  } catch (error) {
+    ElMessage.error('网络异常，获取列表失败')
+    console.error('获取申请列表失败：', error)
+  } finally {
+    loading.value = false
   }
 }
+
+// 每页条数改变
+const handleSizeChange = (val) => {
+  pageSize.value = val
+  getApplyList()
+}
+
+// 当前页改变
+const handleCurrentChange = (val) => {
+  currentPage.value = val
+  getApplyList()
+}
+
+// 页面挂载时加载数据
+onMounted(() => {
+  getApplyList()
+})
 </script>
 
 <style scoped>
+/* 整体容器 */
 .audit-container {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #f8f9fa;
+  box-sizing: border-box;
+}
+
+/* 顶部栏 */
+.header {
   display: flex;
-  justify-content: center;
   align-items: center;
-  background-color: #f5f5f5;
-}
-.audit-card {
-  width: 600px;
-  padding: 40px;
-  text-align: center;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-h1 {
-  color: #1989fa;
   margin-bottom: 20px;
+}
+
+/* 返回按钮 */
+.back-btn {
+  margin-right: 20px;
+  background-color: #1989fa;
+  border: none;
+}
+
+/* 页面标题 */
+.page-title {
+  color: #1989fa;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* 列表卡片 */
+.audit-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  border: 1px solid #e8f4fc;
+}
+
+/* 分页组件 */
+.pagination {
+  margin-top: 20px;
+  text-align: right;
+}
+
+/* 适配Element Plus分页组件的蓝白风格 */
+:deep(.el-pagination.is-background .el-pager li:not(.disabled).active) {
+  background-color: #1989fa;
+}
+:deep(.el-pagination.is-background .el-pager li:hover) {
+  color: #1989fa;
 }
 </style>
