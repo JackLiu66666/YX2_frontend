@@ -198,6 +198,8 @@ export default {
         geo: {
           map: "china",
           roam: true,
+          center: [108, 35], // 往左上偏移
+          zoom: 1.5, // 放大1.5倍
           label: {
             show: true,
             fontSize: 10,
@@ -216,7 +218,7 @@ export default {
               color: "#fff",
             },
           },
-          // 隐藏南海诸岛
+          // 隐藏南海诸岛、香港、澳门特别行政区的显示和交互
           regions: [
             {
               name: "南海诸岛",
@@ -225,10 +227,38 @@ export default {
                 borderColor: "transparent",
                 opacity: 0,
               },
+              label: {
+                show: false,
+              },
               emphasis: {
                 itemStyle: {
                   areaColor: "transparent",
                   borderColor: "transparent",
+                },
+                label: {
+                  show: false,
+                },
+              },
+            },
+            {
+              name: "香港特别行政区",
+              label: {
+                show: false,
+              },
+              emphasis: {
+                label: {
+                  show: false,
+                },
+              },
+            },
+            {
+              name: "澳门特别行政区",
+              label: {
+                show: false,
+              },
+              emphasis: {
+                label: {
+                  show: false,
                 },
               },
             },
@@ -265,6 +295,10 @@ export default {
       await this.loadProvinceMap(provinceName);
       await this.fetchCitiesWithAgency(provinceName);
       this.mapLevel = "city";
+      // 重置地图状态，确保进入省份地图时缩放状态重置
+      this.mapChart.dispatchAction({
+        type: "restore",
+      });
       this.renderCityMap();
     },
     async fetchCitiesWithAgency(province) {
@@ -354,6 +388,13 @@ export default {
         ],
       };
 
+      // 修复海南省地图显示问题
+      if (this.currentProvince === "海南省") {
+        option.geo.center = [109.844902, 19.0392]; // 中心位置
+        option.geo.layoutCenter = ["50%", "40%"]; // 地图相对容器偏移
+        option.geo.layoutSize = "380%"; // 地图放大比例
+      }
+
       this.mapChart.setOption(option);
     },
     async handleCityClick(cityName) {
@@ -374,6 +415,10 @@ export default {
       this.mapLevel = "province";
       this.currentProvince = "";
       this.currentCity = "";
+      // 重置地图状态，确保回到全国地图时回正
+      this.mapChart.dispatchAction({
+        type: "restore",
+      });
       this.renderProvinceMap();
     },
     handleResize() {
@@ -389,10 +434,12 @@ export default {
 .map-container {
   position: relative;
   width: 100%;
-  height: 600px;
+  height: 800px;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .map-chart {
