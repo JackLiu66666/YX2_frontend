@@ -120,6 +120,43 @@ export default {
       };
       return provinceAdcodes[provinceName] || null;
     },
+    getProvinceCenter(provinceName) {
+      // 各省份中心点坐标
+      const provinceCenters = {
+        北京市: [116.4074, 39.9042],
+        天津市: [117.2009, 39.0842],
+        河北省: [114.5149, 38.0428],
+        山西省: [112.5492, 37.857],
+        内蒙古自治区: [111.6708, 40.8184],
+        辽宁省: [123.4315, 41.8057],
+        吉林省: [125.324, 43.8168],
+        黑龙江省: [126.6424, 45.7569],
+        上海市: [121.4737, 31.2304],
+        江苏省: [118.7674, 32.0415],
+        浙江省: [120.1551, 30.2741],
+        安徽省: [117.283, 31.8612],
+        福建省: [119.2965, 26.0745],
+        江西省: [115.8922, 28.6765],
+        山东省: [117.02, 36.6758],
+        河南省: [113.65, 34.7668],
+        湖北省: [114.3055, 30.5928],
+        湖南省: [112.9822, 28.1941],
+        广东省: [113.2644, 23.1291],
+        广西壮族自治区: [108.32, 22.8241],
+        海南省: [110.3311, 20.0319],
+        重庆市: [106.55, 29.5633],
+        四川省: [104.0665, 30.5723],
+        贵州省: [106.7135, 26.5783],
+        云南省: [102.7122, 25.0406],
+        西藏自治区: [91.1322, 29.6603],
+        陕西省: [108.9402, 34.3416],
+        甘肃省: [103.8235, 36.058],
+        青海省: [101.7783, 36.6232],
+        宁夏回族自治区: [106.258, 38.4668],
+        新疆维吾尔自治区: [87.6168, 43.7928],
+      };
+      return provinceCenters[provinceName] || [104.1954, 35.8617]; // 默认中国中心点
+    },
     initChart() {
       if (!this.$refs.mapRef) return;
 
@@ -160,7 +197,7 @@ export default {
         },
         geo: {
           map: "china",
-          roam: false,
+          roam: true,
           label: {
             show: true,
             fontSize: 10,
@@ -179,6 +216,23 @@ export default {
               color: "#fff",
             },
           },
+          // 隐藏南海诸岛
+          regions: [
+            {
+              name: "南海诸岛",
+              itemStyle: {
+                areaColor: "transparent",
+                borderColor: "transparent",
+                opacity: 0,
+              },
+              emphasis: {
+                itemStyle: {
+                  areaColor: "transparent",
+                  borderColor: "transparent",
+                },
+              },
+            },
+          ],
         },
         series: [
           {
@@ -194,6 +248,12 @@ export default {
       this.mapChart.setOption(option);
     },
     async handleMapClick(params) {
+      // 排除南海诸岛、香港、澳门和台湾，使其不可点击
+      const excludedAreas = ["南海诸岛", "香港特别行政区", "澳门特别行政区", "台湾省"];
+      if (excludedAreas.includes(params.name)) {
+        return;
+      }
+
       if (this.mapLevel === "province") {
         await this.handleProvinceClick(params.name);
       } else if (this.mapLevel === "city") {
@@ -245,7 +305,8 @@ export default {
         },
         geo: {
           map: this.currentProvince,
-          roam: false,
+          roam: true,
+          center: this.getProvinceCenter(this.currentProvince),
           label: {
             show: true,
             fontSize: 10,
@@ -264,6 +325,23 @@ export default {
               color: "#fff",
             },
           },
+          // 隐藏南海诸岛（如果是海南省地图）
+          regions: [
+            {
+              name: "南海诸岛",
+              itemStyle: {
+                areaColor: "transparent",
+                borderColor: "transparent",
+                opacity: 0,
+              },
+              emphasis: {
+                itemStyle: {
+                  areaColor: "transparent",
+                  borderColor: "transparent",
+                },
+              },
+            },
+          ],
         },
         series: [
           {
