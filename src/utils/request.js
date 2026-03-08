@@ -32,7 +32,24 @@ service.interceptors.response.use(
   },
   error => {
     console.error('响应错误:', error)
-    ElMessage.error(error.message || '服务器错误')
+    if (error.response?.status === 401) {
+      ElMessage.warning('登录已过期，请重新登录')
+      // 跳转到登录页面
+      const currentPath = window.location.pathname
+      if (currentPath.includes('/admin/')) {
+        window.location.href = '/admin/login'
+      } else if (currentPath.includes('/agency/')) {
+        window.location.href = '/agency/login'
+      } else if (currentPath.includes('/insurance_company/')) {
+        window.location.href = '/insurance_company/login'
+      } else if (currentPath.includes('/nurse/')) {
+        window.location.href = '/nurse/login'
+      } else {
+        window.location.href = '/admin/login'
+      }
+    } else {
+      ElMessage.error(error.message || '服务器错误')
+    }
     return Promise.reject(error)
   }
 )
