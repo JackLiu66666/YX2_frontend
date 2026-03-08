@@ -3,11 +3,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AdminApp from '@/admin/App.vue'
 import AgencyApp from '@/agency/App.vue'
 import InsuranceCompanyApp from '@/insurance_company/App.vue'
+import NurseApp from '@/nurse/App.vue'
 
 // 导入模块的路由配置数组
 import adminRoutes from '@/admin/adminRouter.js'
 import agencyRoutes from '@/agency/agencyRouter.js'
 import insuranceCompanyRoutes from '@/insurance_company/insuranceCompanyRouter.js'
+import nurseRoutes from '@/nurse/nurseRouter.js'
 
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
@@ -27,6 +29,11 @@ const routes = [
     path: '/insurance_company',
     component: InsuranceCompanyApp,
     children: insuranceCompanyRoutes
+  },
+  {
+    path: '/nurse',
+    component: NurseApp,
+    children: nurseRoutes
   },
   {
     path: '/',
