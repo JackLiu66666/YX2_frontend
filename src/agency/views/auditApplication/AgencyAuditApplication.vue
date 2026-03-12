@@ -113,26 +113,109 @@
 
           <!-- 合作信息 -->
           <el-divider content-position="left">合作信息</el-divider>
+          
+          <!-- 合作业务范围 - 改为多选框 -->
           <el-form-item label="合作业务范围" prop="businessScope">
-            <el-input v-model="applicationForm.businessScope" type="textarea" :rows="2" placeholder="请输入可代理险种/业务类型" />
+            <el-checkbox-group v-model="applicationForm.businessScope">
+              <el-checkbox label="1" border>院陪诊（医院陪诊服务）</el-checkbox>
+              <el-checkbox label="2" border>院陪护（医院陪护服务）</el-checkbox>
+              <el-checkbox label="3" border>院办办（院方办理相关服务）</el-checkbox>
+              <el-checkbox label="4" border>院保保（医院保险相关服务）</el-checkbox>
+              <el-checkbox label="5" border>院垫垫（医院垫付相关服务）</el-checkbox>
+              <el-checkbox label="6" border>院探探（医院探望服务）</el-checkbox>
+            </el-checkbox-group>
           </el-form-item>
 
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="合作区域" prop="cooperationArea">
-                <el-select v-model="applicationForm.cooperationArea" placeholder="请选择合作区域">
-                  <el-option label="本市" value="本市" />
-                  <el-option label="本省" value="本省" />
-                  <el-option label="全国" value="全国" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="合作模式" prop="cooperationMode">
-                <el-input v-model="applicationForm.cooperationMode" placeholder="如：渠道推广/客户引流/系统对接等" />
-              </el-form-item>
-            </el-col>
-          </el-row>
+          <!-- 合作区域 - 省市区医院多级联动 -->
+          <el-divider content-position="left">合作区域</el-divider>
+          <div class="cooperation-area-section">
+            <div class="area-add-section">
+              <h4>添加合作区域</h4>
+              <el-form :inline="true" class="area-form">
+                <el-form-item label="省份">
+                  <el-select 
+                    v-model="selectedProvince" 
+                    placeholder="请选择省份" 
+                    @change="handleProvinceChange"
+                    style="width: 200px"
+                  >
+                    <el-option
+                      v-for="item in provinceList"
+                      :key="item.province"
+                      :label="item.province"
+                      :value="item.province"
+                    />
+                  </el-select>
+                </el-form-item>
+                
+                <el-form-item label="城市">
+                  <el-select 
+                    v-model="selectedCity" 
+                    placeholder="请选择城市" 
+                    @change="handleCityChange"
+                    :disabled="!selectedProvince"
+                    style="width: 200px"
+                  >
+                    <el-option
+                      v-for="item in cityList"
+                      :key="item.city"
+                      :label="item.city"
+                      :value="item.city"
+                    />
+                  </el-select>
+                </el-form-item>
+                
+                <el-form-item label="医院">
+                  <el-select 
+                    v-model="selectedHospitalIds" 
+                    placeholder="请选择医院（留空表示全市）" 
+                    multiple
+                    :disabled="!selectedCity"
+                    style="width: 300px"
+                  >
+                    <el-option
+                      v-for="item in hospitalList"
+                      :key="item.id"
+                      :label="item.hospitalName"
+                      :value="item.id"
+                    />
+                  </el-select>
+                </el-form-item>
+                
+                <el-form-item>
+                  <el-button type="primary" @click="addCooperationArea" :disabled="!selectedCity">
+                    添加此区域
+                  </el-button>
+                </el-form-item>
+              </el-form>
+            </div>
+
+            <!-- 已选区域列表 -->
+            <div class="area-list-section" v-if="cooperationAreaList.length > 0">
+              <h4>已选合作区域</h4>
+              <el-table :data="cooperationAreaList" border style="width: 100%">
+                <el-table-column prop="province" label="省份" width="120" />
+                <el-table-column prop="city" label="城市" width="120" />
+                <el-table-column label="医院范围">
+                  <template #default="{ row }">
+                    <span v-if="row.hospitalIds && row.hospitalIds.length > 0">
+                      指定 {{ row.hospitalIds.length }} 家医院
+                    </span>
+                    <span v-else style="color: #909399;">全市</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="100">
+                  <template #default="{ index }">
+                    <el-button type="danger" size="small" @click="removeCooperationArea(index)">删除</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+
+          <el-form-item label="合作模式" prop="cooperationMode">
+            <el-input v-model="applicationForm.cooperationMode" placeholder="如：渠道推广/客户引流/系统对接等" />
+          </el-form-item>
 
           <!-- 承诺与文件 -->
           <el-divider content-position="left">承诺与文件</el-divider>
@@ -198,13 +281,22 @@ const applicationForm = reactive({
   contactPersonOfficePhone: "",
   contactPersonEmail: "",
   companyFixedPhone: "",
-  businessScope: "",
-  cooperationArea: "",
+  businessScope: [], // 改为数组存储 [1,2,3]
+  cooperationArea: "", // 存储 JSON 字符串
   cooperationMode: "",
   authenticityCommitment: "",
   sealFile: null,
   applyDate: new Date(),
 });
+
+// 合作区域相关数据
+const provinceList = ref([]);
+const cityList = ref([]);
+const hospitalList = ref([]);
+const selectedProvince = ref("");
+const selectedCity = ref("");
+const selectedHospitalIds = ref([]);
+const cooperationAreaList = ref([]);
 
 // 盖章文件列表
 const sealFileList = ref([]);
@@ -214,7 +306,7 @@ const formRules = reactive({
   agencyFullName: [{ required: true, message: "请输入机构全称", trigger: "blur" }],
   socialCreditCode: [
     { required: true, message: "请输入统一社会信用代码", trigger: "blur" },
-    { pattern: /^[0-9A-Z]{18}$/, message: "请输入18位有效信用代码", trigger: "blur" },
+    { pattern: /^[0-9A-Z]{18}$/, message: "请输入 18 位有效信用代码", trigger: "blur" },
   ],
   registeredAddress: [{ required: true, message: "请输入注册地址", trigger: "blur" }],
   agencyType: [{ required: true, message: "请选择机构类型", trigger: "change" }],
@@ -240,8 +332,31 @@ const formRules = reactive({
     { type: "email", message: "请输入有效邮箱", trigger: "blur" },
   ],
   companyFixedPhone: [{ required: true, message: "请输入公司固定电话", trigger: "blur" }],
-  businessScope: [{ required: true, message: "请输入合作业务范围", trigger: "blur" }],
-  cooperationArea: [{ required: true, message: "请选择合作区域", trigger: "change" }],
+  businessScope: [
+    { required: true, message: "请至少选择一个业务模块", trigger: "change" },
+    { validator: (rule, value, callback) => {
+        if (!Array.isArray(value) || value.length === 0) {
+          callback(new Error('请至少选择一个业务模块'));
+        } else {
+          callback();
+        }
+      }, 
+      trigger: "change" 
+    }
+  ],
+  cooperationArea: [
+    { required: true, message: "请至少添加一个合作区域", trigger: "change" },
+    { validator: (rule, value, callback) => {
+        const list = JSON.parse(value || '[]');
+        if (!Array.isArray(list) || list.length === 0) {
+          callback(new Error('请至少添加一个合作区域'));
+        } else {
+          callback();
+        }
+      }, 
+      trigger: "change" 
+    }
+  ],
   cooperationMode: [{ required: true, message: "请输入合作模式", trigger: "blur" }],
   authenticityCommitment: [{ required: true, message: "请确认资料真实性承诺", trigger: "change" }],
   sealFile: [{ required: true, message: "请上传申请单位盖章文件", trigger: "change" }],
@@ -273,6 +388,95 @@ const checkApplied = async () => {
   } catch (error) {
     ElMessage.error("检查申请状态失败：" + error.message);
   }
+};
+
+// 加载省份列表
+const loadProvinces = async () => {
+  try {
+    const res = await request.get("/agencyAuditApplication/provinces");
+    if (res.code === 200) {
+      provinceList.value = res.data;
+    }
+  } catch (error) {
+    ElMessage.error("加载省份列表失败：" + error.message);
+  }
+};
+
+// 处理省份变化
+const handleProvinceChange = async () => {
+  cityList.value = [];
+  hospitalList.value = [];
+  selectedCity.value = "";
+  selectedHospitalIds.value = [];
+  
+  if (!selectedProvince.value) return;
+  
+  try {
+    const res = await request.get("/agencyAuditApplication/cities", {
+      params: { province: selectedProvince.value }
+    });
+    if (res.code === 200) {
+      cityList.value = res.data;
+    }
+  } catch (error) {
+    ElMessage.error("加载城市列表失败：" + error.message);
+  }
+};
+
+// 处理城市变化
+const handleCityChange = async () => {
+  hospitalList.value = [];
+  selectedHospitalIds.value = [];
+  
+  if (!selectedCity.value) return;
+  
+  try {
+    const res = await request.get("/agencyAuditApplication/hospitals", {
+      params: { city: selectedCity.value }
+    });
+    if (res.code === 200) {
+      hospitalList.value = res.data;
+    }
+  } catch (error) {
+    ElMessage.error("加载医院列表失败：" + error.message);
+  }
+};
+
+// 添加合作区域
+const addCooperationArea = () => {
+  if (!selectedProvince.value || !selectedCity.value) {
+    ElMessage.warning("请选择省份和城市");
+    return;
+  }
+  
+  // 检查是否已存在相同的省市区组合
+  const exists = cooperationAreaList.value.some(item => 
+    item.province === selectedProvince.value && 
+    item.city === selectedCity.value
+  );
+  
+  if (exists) {
+    ElMessage.warning("该区域已添加，请勿重复添加");
+    return;
+  }
+  
+  cooperationAreaList.value.push({
+    province: selectedProvince.value,
+    city: selectedCity.value,
+    hospitalIds: [...selectedHospitalIds.value]
+  });
+  
+  // 清空选择
+  selectedCity.value = "";
+  selectedHospitalIds.value = [];
+  hospitalList.value = [];
+  
+  ElMessage.success("添加成功");
+};
+
+// 删除合作区域
+const removeCooperationArea = (index) => {
+  cooperationAreaList.value.splice(index, 1);
 };
 
 // 提交申请
@@ -307,6 +511,18 @@ const submitApplication = async () => {
     }
     // 删除不再需要的 licenseValidRange 字段
     delete submitData.licenseValidRange;
+    
+    // 5. 处理特殊字段格式
+    // businessScope: 数组转为 JSON 字符串
+    if (Array.isArray(submitData.businessScope)) {
+      submitData.businessScope = JSON.stringify(submitData.businessScope);
+    }
+    
+    // cooperationArea: 使用已选择的区域列表，转为 JSON 字符串
+    if (cooperationAreaList.value.length > 0) {
+      submitData.cooperationArea = JSON.stringify(cooperationAreaList.value);
+    }
+    
     // 5. 构建 FormData（关键修改：使用 submitData）
     const formData = new FormData();
     for (const key in submitData) {
@@ -344,6 +560,7 @@ const submitApplication = async () => {
 // 页面加载时检查申请状态
 onMounted(() => {
   checkApplied();
+  loadProvinces(); // 加载省份列表
 });
 
 //测试部分
@@ -352,9 +569,9 @@ const fillTestData = () => {
   Object.assign(applicationForm, {
     agencyFullName: '云测科技有限公司',
     socialCreditCode: '91310115MA1H2Y9P6X',
-    registeredAddress: '上海市浦东新区松涛路666号',
+    registeredAddress: '上海市浦东新区松涛路 666 号',
     agencyType: '保险代理',                // 改为与选项匹配的值
-    businessLicenseNo: '沪B2-20230123',
+    businessLicenseNo: '沪 B2-20230123',
     licenseValidRange: [
       new Date(),
       dayjs().add(1, 'year').toDate()
@@ -368,13 +585,19 @@ const fillTestData = () => {
     contactPersonEmail: 'lifang@yhence.com',
     contactPersonOfficePhone: '021-12345678', // 如果有此字段
     companyFixedPhone: '021-12345678',
-    businessScope: '软件代理销售、技术咨询服务',
-    cooperationArea: '本市',                 // 改为字符串，与 select 选项一致
+    businessScope: ['1', '2', '3'],         // 改为数组格式
+    cooperationArea: '',                     // cooperationArea 通过 cooperationAreaList 填充
     cooperationMode: '代理分成',
     authenticityCommitment: '1',             // 改为字符串 "1"，与 radio 的 label 匹配
     sealFile: null,
     applyDate: new Date(),
   });
+
+  // 设置测试用的合作区域
+  cooperationAreaList.value = [
+    { province: '广东省', city: '广州市', hospitalIds: [1, 2, 3] },
+    { province: '广东省', city: '深圳市', hospitalIds: [] }
+  ];
 
   // 清空文件列表（如果之前有文件）
   sealFileList.value = [];
@@ -441,6 +664,29 @@ const fillTestData = () => {
   margin-bottom: 16px;
 }
 
+/* 合作区域样式 */
+.cooperation-area-section {
+  padding: 15px;
+  background-color: #f9fafc;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.area-add-section h4,
+.area-list-section h4 {
+  margin: 0 0 15px 0;
+  color: #1989fa;
+  font-size: 15px;
+}
+
+.area-form {
+  margin-bottom: 20px;
+}
+
+.area-list-section {
+  margin-top: 20px;
+}
+
 /* 适配移动端 */
 @media (max-width: 768px) {
   .audit-application-page {
@@ -454,6 +700,20 @@ const fillTestData = () => {
   .el-form-item__label {
     width: 120px !important;
     font-size: 14px;
+  }
+  
+  .area-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .area-form .el-form-item {
+    width: 100%;
+    margin-right: 0;
+  }
+  
+  .area-form .el-select {
+    width: 100% !important;
   }
 }
 </style>
