@@ -23,10 +23,11 @@
         stripe 
         style="width: 100%"
         :header-cell-style="{background: '#e8f4fc', color: '#1989fa'}"
+        @row-click="handleRowClick"
       >
         <el-table-column 
           prop="id" 
-          label="申请ID" 
+          label="申请 ID" 
           align="center" 
           width="120"
         />
@@ -48,6 +49,22 @@
             >
               {{ getStatusText(scope.row.auditStatus) }}
             </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column 
+          label="操作" 
+          align="center" 
+          width="150"
+          fixed="right"
+        >
+          <template #default="scope">
+            <el-button 
+              type="primary" 
+              link
+              @click.stop="viewDetail(scope.row.id)"
+            >
+              查看详情
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -89,6 +106,16 @@ const goBack = () => {
   router.push('home')
 }
 
+// 查看详细信息
+const viewDetail = (id) => {
+  router.push(`/admin/agencyApplicationReview/${id}`)
+}
+
+// 行点击事件
+const handleRowClick = (row) => {
+  viewDetail(row.id)
+}
+
 // 审核状态标签类型映射
 const getStatusTagType = (status) => {
   const map = { 0: 'info', 1: 'warning', 2: 'success', 3: 'danger' }
@@ -110,7 +137,7 @@ const getApplyList = async () => {
         current: currentPage.value,
         size: pageSize.value
       },
-      // 携带cookie（兼容session登录态）
+      // 携带 cookie（兼容 session 登录态）
       withCredentials: true
     })
     if (res.code === 200) {
@@ -123,7 +150,7 @@ const getApplyList = async () => {
     ElMessage.error('网络异常，获取列表失败')
     console.error('获取申请列表失败：', error)
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
@@ -183,13 +210,22 @@ onMounted(() => {
   border: 1px solid #e8f4fc;
 }
 
+/* 列表表格行样式 */
+:deep(.el-table__row) {
+  cursor: pointer;
+}
+
+:deep(.el-table__row:hover) {
+  background-color: #f5f7fa;
+}
+
 /* 分页组件 */
 .pagination {
   margin-top: 20px;
   text-align: right;
 }
 
-/* 适配Element Plus分页组件的蓝白风格 */
+/* 适配 Element Plus 分页组件的蓝白风栺 */
 :deep(.el-pagination.is-background .el-pager li:not(.disabled).active) {
   background-color: #1989fa;
 }

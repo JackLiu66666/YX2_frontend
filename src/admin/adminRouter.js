@@ -3,6 +3,7 @@ import LoginPage from './views/LoginPage.vue'
 import HomePage from './views/HomePage.vue'
 import AgencyAuditPage from './views/AgencyAuditPage.vue'
 import InsuranceCompanyAuditPage from './views/InsuranceCompanyAuditPage.vue'
+import AgencyApplicationReview from './views/ApplicationReview/AgencyApplicationReview.vue'
 
 const adminRoutes = [
   {
@@ -24,6 +25,12 @@ const adminRoutes = [
     path: 'insuranceCompanyAudit',
     name: 'Insurance Company Audit Page',
     component: InsuranceCompanyAuditPage
+  },
+  {
+    path: 'agencyApplicationReview/:id',
+    name: 'Agency Application Review',
+    component: AgencyApplicationReview,
+    props: true
   }
 ]
 

@@ -1,5 +1,17 @@
 <template>
   <div class="application-review-container">
+    <!-- 顶部返回按钮 -->
+    <div class="header">
+      <el-button 
+        type="primary" 
+        icon="el-icon-arrow-left" 
+        @click="goBack"
+        class="back-btn"
+      >
+        返回
+      </el-button>
+    </div>
+
     <!-- 加载提示 -->
     <div v-if="loading" class="loading">加载中...</div>
 
@@ -15,7 +27,7 @@
         <h3 class="section-title">基础信息</h3>
         <div class="form-grid">
           <div class="form-item">
-            <label class="label">申请ID：</label>
+            <label class="label">申请 ID：</label>
             <span class="value">{{ application.applyId || '-' }}</span>
           </div>
           <div class="form-item">
@@ -98,13 +110,51 @@
       <div class="form-section">
         <h3 class="section-title">合作信息</h3>
         <div class="form-grid">
-          <div class="form-item">
+          <div class="form-item full-width">
             <label class="label">合作业务范围：</label>
-            <span class="value">{{ application.businessScope || '-' }}</span>
+            <div class="business-scope-tags">
+              <el-tag 
+                v-for="(scope, index) in parsedBusinessScope" 
+                :key="index"
+                type="info"
+                effect="plain"
+                class="scope-tag"
+              >
+                {{ scope }}
+              </el-tag>
+            </div>
           </div>
-          <div class="form-item">
+          <div class="form-item full-width">
             <label class="label">合作区域：</label>
-            <span class="value">{{ application.cooperationArea || '-' }}</span>
+            <div class="cooperation-area-content">
+              <el-button 
+                type="primary" 
+                link 
+                @click="toggleCooperationArea"
+                class="toggle-btn"
+              >
+                {{ isCooperationAreaExpanded ? '收起' : '展开' }}
+                <el-icon :class="{ 'rotated': isCooperationAreaExpanded }">
+                  <arrow-down />
+                </el-icon>
+              </el-button>
+              
+              <transition name="expand">
+                <div v-show="isCooperationAreaExpanded" class="cooperation-area-detail">
+                  <div v-for="(area, index) in parsedCooperationArea" :key="index" class="area-item">
+                    <div class="area-province">
+                      <strong>{{ area.province }} - {{ area.city }}</strong>
+                    </div>
+                    <div v-if="area.hospitals && area.hospitals.length > 0" class="hospital-list">
+                      <div v-for="hospital in area.hospitals" :key="hospital.id" class="hospital-item">
+                        {{ hospital.province }}{{ hospital.city }}{{ hospital.districtCounty }} - {{ hospital.hospitalName }}（{{ hospital.hospitalLevel }}）
+                      </div>
+                    </div>
+                    <div v-else class="no-hospitals">全部医院</div>
+                  </div>
+                </div>
+              </transition>
+            </div>
           </div>
           <div class="form-item">
             <label class="label">合作模式：</label>
@@ -121,14 +171,14 @@
       <div class="form-section" v-if="application.sealFilePath">
         <h3 class="section-title">盖章文件预览</h3>
         <div class="file-preview">
-          <!-- PDF预览（使用embed标签） -->
+          <!-- PDF 预览（使用 embed 标签） -->
           <embed 
             v-if="isPdfFile" 
             :src="application.sealFilePath" 
             type="application/pdf"
             class="preview-file pdf"
           >
-          <!-- 图片预览（使用img标签） -->
+          <!-- 图片预览（使用 img 标签） -->
           <img 
             v-else 
             :src="application.sealFilePath" 
@@ -138,13 +188,35 @@
           >
         </div>
       </div>
+
+      <!-- 审核操作按钮 -->
+      <div class="action-buttons">
+        <el-button 
+          type="success" 
+          size="large"
+          @click="handlePassApplication"
+          :loading="submitting"
+        >
+          通过申请
+        </el-button>
+        <el-button 
+          type="danger" 
+          size="large"
+          @click="handleRejectApplication"
+          :loading="submitting"
+        >
+          不通过申请
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute} from 'vue-router';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { ArrowDown } from '@element-plus/icons-vue';
 import request from '@/utils/request';
 
 // 响应式数据
@@ -152,8 +224,40 @@ const loading = ref(true); // 加载状态
 const errorMsg = ref(''); // 错误信息
 const application = ref({}); // 申请表单数据
 const route = useRoute(); // 获取路由参数
+const submitting = ref(false); // 提交中状态
+const isCooperationAreaExpanded = ref(false); // 合作区域是否展开
 
-// 判断是否为PDF文件
+// 解析合作业务范围
+const parsedBusinessScope = computed(() => {
+  if (!application.value.businessScope) return [];
+  try {
+    // 如果是字符串，尝试解析 JSON
+    if (typeof application.value.businessScope === 'string') {
+      return JSON.parse(application.value.businessScope);
+    }
+    return application.value.businessScope;
+  } catch (e) {
+    console.error('解析合作业务范围失败：', e);
+    return [];
+  }
+});
+
+// 解析合作区域数据
+const parsedCooperationArea = computed(() => {
+  if (!application.value.cooperationArea) return [];
+  try {
+    // 如果是字符串，尝试解析 JSON
+    if (typeof application.value.cooperationArea === 'string') {
+      return JSON.parse(application.value.cooperationArea);
+    }
+    return application.value.cooperationArea;
+  } catch (e) {
+    console.error('解析合作区域失败：', e);
+    return [];
+  }
+});
+
+// 判断是否为 PDF 文件
 const isPdfFile = computed(() => {
   if (!application.value.sealFilePath) return false;
   return application.value.sealFilePath.toLowerCase().endsWith('.pdf');
@@ -164,22 +268,99 @@ const handleImageError = () => {
   errorMsg.value = '盖章图片加载失败，请检查文件路径';
 };
 
-// 根据ID查询申请表单数据
+// 切换合作区域展开/收起状态
+const toggleCooperationArea = () => {
+  isCooperationAreaExpanded.value = !isCooperationAreaExpanded.value;
+};
+
+// 通过申请
+const handlePassApplication = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确认要通过该申请吗？',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'success'
+      }
+    );
+    
+    submitting.value = true;
+    // TODO: 调用通过申请的接口
+    // const response = await request.post(`/admin/agencyApplicationReview/pass/${application.value.id}`);
+    // if (response.data.code === 200) {
+    //   ElMessage.success('审核通过成功');
+    //   router.back();
+    // } else {
+    //   ElMessage.error(response.data.msg || '审核通过失败');
+    // }
+    
+    ElMessage.success('审核通过成功（接口待接入）');
+    // router.back();
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('操作失败：' + (error.message || '网络异常'));
+    }
+  } finally {
+    submitting.value = false;
+  }
+};
+
+// 不通过申请
+const handleRejectApplication = async () => {
+  try {
+    await ElMessageBox.prompt(
+      '请输入不通过的原因：',
+      '审核不通过',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: /.+/,
+        inputErrorMessage: '请填写不通过原因',
+        type: 'warning'
+      }
+    ).then(async ({ value }) => {
+      submitting.value = true;
+      // TODO: 调用不通过申请的接口
+      // const response = await request.post(`/admin/agencyApplicationReview/reject/${application.value.id}`, {
+      //   reason: value
+      // });
+      // if (response.data.code === 200) {
+      //   ElMessage.success('审核不通过成功');
+      //   router.back();
+      // } else {
+      //   ElMessage.error(response.data.msg || '审核不通过失败');
+      // }
+      
+      ElMessage.success(`审核不通过成功（原因：${value}，接口待接入）`);
+      // router.back();
+    });
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('操作失败：' + (error.message || '网络异常'));
+    }
+  } finally {
+    submitting.value = false;
+  }
+};
+
+// 根据 ID 查询申请表单数据
 const getApplicationById = async () => {
   try {
-    const id = route.params.id; // 从路由获取ID（也可通过props/参数传递）
+    const id = route.params.id; // 从路由获取ID
     if (!id) {
       errorMsg.value = '未传入申请表ID';
       loading.value = false;
       return;
     }
 
-    // 发送请求（携带Session）
-    const response = await request.get(`/admin/agencyApplicationReview/${id}`);
-    if (response.data.code === 200) {
-      application.value = response.data.data;
+    // 发送请求（携带 Session）
+    const response = await request.get(`/admin/agencyApplicationReview/list/${id}`);
+    if (response.code === 200) {
+      application.value = response.data;
     } else {
-      errorMsg.value = response.data.msg;
+      errorMsg.value = response.msg || '获取详情失败';
     }
   } catch (err) {
     errorMsg.value = '请求失败：' + (err.message || '网络异常');
@@ -192,6 +373,11 @@ const getApplicationById = async () => {
 onMounted(() => {
   getApplicationById();
 });
+
+// 返回上一页
+const goBack = () => {
+  window.history.back();
+};
 </script>
 
 <style scoped>
@@ -203,6 +389,15 @@ onMounted(() => {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.header {
+  margin-bottom: 20px;
+}
+
+.back-btn {
+  font-size: 14px;
+  padding: 8px 15px;
 }
 
 .loading, .error {
@@ -247,6 +442,10 @@ onMounted(() => {
   border-bottom: 1px solid #f5f5f5;
 }
 
+.form-item.full-width {
+  grid-column: 1 / -1;
+}
+
 .label {
   width: 120px;
   color: #666;
@@ -258,6 +457,103 @@ onMounted(() => {
   color: #333;
   flex: 1;
   word-break: break-all;
+}
+
+/* 合作业务范围标签样式 */
+.business-scope-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.scope-tag {
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  background-color: #f0f9ff;
+  border-color: #bae7ff;
+  color: #1890ff;
+}
+
+/* 合作区域样式 */
+.cooperation-area-content {
+  flex: 1;
+}
+
+.toggle-btn {
+  font-size: 14px;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.toggle-btn .el-icon {
+  transition: transform 0.3s;
+}
+
+.toggle-btn .el-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.cooperation-area-detail {
+  margin-top: 10px;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.area-item {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed #e0e0e0;
+}
+
+.area-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.area-province {
+  font-size: 15px;
+  color: #1976d2;
+  margin-bottom: 10px;
+}
+
+.hospital-list {
+  padding-left: 20px;
+}
+
+.hospital-item {
+  padding: 5px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.no-hospitals {
+  color: #1976d2;
+  font-style: italic;
+  padding-left: 20px;
+  font-weight: 500;
+}
+
+/* 展开动画 */
+.expand-enter-active,
+.expand-leave-active {
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 1000px;
 }
 
 /* 文件预览样式 */
@@ -278,5 +574,20 @@ onMounted(() => {
   min-height: auto;
   max-height: 800px;
   object-fit: contain;
+}
+
+/* 审核操作按钮 */
+.action-buttons {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid #e3f2fd;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.action-buttons .el-button {
+  min-width: 150px;
+  font-size: 16px;
 }
 </style>
