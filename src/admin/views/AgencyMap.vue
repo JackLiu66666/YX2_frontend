@@ -1,7 +1,7 @@
 <template>
   <div class="map-container">
     <div ref="mapRef" class="map-chart"></div>
-    <el-dialog v-model="hospitalDialogVisible" :title="`${currentCity} 有代理商的医院`" width="600px">
+    <el-dialog v-model="hospitalDialogVisible" :title="`${currentCity} 有服务布局的医院`" width="600px">
       <el-table :data="hospitals" style="width: 100%">
         <el-table-column prop="hospitalName" label="医院名称" width="200" />
         <el-table-column prop="hospitalLevel" label="医院等级" width="100" />
@@ -176,7 +176,7 @@ export default {
 
       const option = {
         title: {
-          text: "全国代理商分布",
+          text: "全国服务布局地图",
           left: "center",
           textStyle: {
             color: "#333",
@@ -318,7 +318,7 @@ export default {
 
       const option = {
         title: {
-          text: `${this.currentProvince} 代理商分布`,
+          text: `${this.currentProvince} 服务布局地图`,
           left: "center",
           textStyle: {
             color: "#333",

@@ -190,7 +190,7 @@
       </div>
 
       <!-- 审核操作按钮 -->
-      <div class="action-buttons">
+      <div v-if="application.auditStatus === 0 || application.auditStatus === 1" class="action-buttons">
         <el-button 
           type="success" 
           size="large"
@@ -207,6 +207,17 @@
         >
           不通过申请
         </el-button>
+      </div>
+
+      <!-- 已审核提示 -->
+      <div v-else class="audit-status-tip">
+        <el-alert
+          :title="application.auditStatus === 2 ? '该申请已审核通过' : '该申请已审核不通过'"
+          :type="application.auditStatus === 2 ? 'success' : 'error'"
+          :description="application.auditStatus === 2 ? '该代理商申请已通过审核，可以正常开展业务' : '该代理商申请未通过审核，请查看失败原因'"
+          show-icon
+          :closable="false"
+        />
       </div>
     </div>
   </div>
@@ -287,17 +298,14 @@ const handlePassApplication = async () => {
     );
     
     submitting.value = true;
-    // TODO: 调用通过申请的接口
-    // const response = await request.post(`/admin/agencyApplicationReview/pass/${application.value.id}`);
-    // if (response.data.code === 200) {
-    //   ElMessage.success('审核通过成功');
-    //   router.back();
-    // } else {
-    //   ElMessage.error(response.data.msg || '审核通过失败');
-    // }
-    
-    ElMessage.success('审核通过成功（接口待接入）');
-    // router.back();
+    // 调用通过申请的接口
+    const response = await request.post(`/admin/agencyApplicationReview/approve/${application.value.id}`);
+    if (response.code === 200) {
+      ElMessage.success('审核通过成功');
+      goBack();
+    } else {
+      ElMessage.error(response.msg || '审核通过失败');
+    }
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('操作失败：' + (error.message || '网络异常'));
@@ -310,7 +318,7 @@ const handlePassApplication = async () => {
 // 不通过申请
 const handleRejectApplication = async () => {
   try {
-    await ElMessageBox.prompt(
+    ElMessageBox.prompt(
       '请输入不通过的原因：',
       '审核不通过',
       {
@@ -320,21 +328,18 @@ const handleRejectApplication = async () => {
         inputErrorMessage: '请填写不通过原因',
         type: 'warning'
       }
-    ).then(async ({ value }) => {
+    ).then(async () => {
       submitting.value = true;
-      // TODO: 调用不通过申请的接口
-      // const response = await request.post(`/admin/agencyApplicationReview/reject/${application.value.id}`, {
-      //   reason: value
-      // });
-      // if (response.data.code === 200) {
-      //   ElMessage.success('审核不通过成功');
-      //   router.back();
-      // } else {
-      //   ElMessage.error(response.data.msg || '审核不通过失败');
-      // }
-      
-      ElMessage.success(`审核不通过成功（原因：${value}，接口待接入）`);
-      // router.back();
+      // 调用不通过申请的接口
+      const response = await request.post(`/admin/agencyApplicationReview/reject/${application.value.id}`);
+      if (response.code === 200) {
+        ElMessage.success('审核不通过成功');
+        goBack();
+      } else {
+        ElMessage.error(response.msg || '审核不通过失败');
+      }
+    }).catch(() => {
+      // 用户取消操作
     });
   } catch (error) {
     if (error !== 'cancel') {
@@ -589,5 +594,14 @@ const goBack = () => {
 .action-buttons .el-button {
   min-width: 150px;
   font-size: 16px;
+}
+
+/* 已审核提示样式 */
+.audit-status-tip {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid #e3f2fd;
+  display: flex;
+  justify-content: center;
 }
 </style>
