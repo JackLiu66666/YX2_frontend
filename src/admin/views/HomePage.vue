@@ -1,60 +1,85 @@
 <template>
   <div class="home-container">
     <!-- 顶部栏 -->
-    <el-header style="text-align: right; font-size: 12px">
-      <div style="display: flex; justify-content: flex-end; align-items: center">
-        <span>欢迎回来，{{ adminName }}</span>
-        <el-button type="text" @click="logout" style="margin-left: 15px">退出登录</el-button>
+    <el-header class="header">
+      <div class="header-content">
+        <span class="system-title">院小二 - 管理员后台</span>
+        <!-- 用一个容器包裹右侧元素，方便整体右对齐 -->
+        <div class="header-right">
+          <span class="welcome-text">欢迎回来，{{ adminName }}</span>
+          <el-button type="text" @click="logout" class="logout-btn">退出登录</el-button>
+        </div>
       </div>
     </el-header>
 
-    <!-- 主要内容区 -->
-    <el-main>
-      <div class="main-content">
+    <!-- 主体内容区（左侧导航 + 右侧内容） -->
+    <div class="main-body">
+      <!-- 左侧导航栏 -->
+      <el-aside class="sidebar">
+        <el-menu
+          :default-active="activeMenu"
+          class="sidebar-menu"
+          background-color="#304156"
+          text-color="#bfcbd9"
+          active-text-color="#409EFF"
+          @select="handleMenuSelect"
+        >
+          <el-menu-item index="map">
+            <el-icon><Location /></el-icon>
+            <span>全国服务网络布局地图</span>
+          </el-menu-item>
+          <el-menu-item index="audit">
+            <el-icon><Document /></el-icon>
+            <span>代理商申请审核</span>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
+
+      <!-- 右侧内容区 -->
+      <el-main class="content-area">
         <!-- 地图组件 -->
-        <div class="map-wrapper">
+        <div v-if="activeMenu === 'map'" class="map-wrapper">
           <AgencyMap />
         </div>
 
-        <!-- 按钮区域 -->
-        <el-card class="home-card">
-          <div style="display: flex; gap: 20px">
-            <el-button type="primary" size="large" @click="goToAudit"> 进入代理商审核界面 </el-button>
-            <el-button type="primary" size="large" @click="goToInsurance"> 进入保险公司审核界面 </el-button>
-          </div>
-        </el-card>
-      </div>
-    </el-main>
+        <!-- 代理商审核页面 -->
+        <div v-if="activeMenu === 'audit'" class="audit-page-wrapper">
+          <AgencyAuditPage />
+        </div>
+      </el-main>
+    </div>
   </div>
 </template>
 
 <script>
-import request from "@/utils/request"; // 根据实际路径导入封装的 request 模块
+import request from "@/utils/request";
 import AgencyMap from "@/admin/views/AgencyMap.vue";
+import AgencyAuditPage from "@/admin/views/AgencyAuditPage.vue";
+import { Location, Document } from "@element-plus/icons-vue";
 
 export default {
   name: "Home",
   components: {
     AgencyMap,
+    AgencyAuditPage,
+    Location,
+    Document
   },
   data() {
     return {
-      adminName: "admin", // 实际可从登录状态获取
+      adminName: "admin",
+      activeMenu: "map", // 默认显示地图
     };
   },
   methods: {
-    goToAudit() {
-      this.$router.push("agencyAudit");
-    },
-    goToInsurance() {
-      this.$router.push("insuranceCompany");
+    handleMenuSelect(index) {
+      this.activeMenu = index;
     },
     async logout() {
       try {
         const res = await request.post("/admin/logout");
         if (res.code === 200) {
           this.$message.success("退出成功！");
-          // 跳转到登录页
           this.$router.push("login");
         } else {
           this.$message.error(res.msg || "退出失败");
@@ -70,65 +95,93 @@ export default {
 
 <style scoped>
 .home-container {
-  
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.el-header {
-  background-color: #f5f7fa;
+.header {
+  background-color: #fff;
   border-bottom: 1px solid #e6e9f0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  flex-shrink: 0;
+  height: 60px;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.system-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #409EFF;
+  margin-right: auto;
+}
+
+.welcome-text {
+  font-size: 14px;
+  color: #606266;
+}
+
+.logout-btn {
+  color: #409EFF;
+  font-size: 14px;
+}
+
+.main-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 240px;
+  background-color: #304156;
+  overflow-y: auto;
   flex-shrink: 0;
 }
 
-.el-main {
-  padding: 20px;
-
-  display: flex;
-  flex-direction: column;
+.sidebar-menu {
+  border-right: none;
+  height: 100%;
 }
 
-.main-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  align-items: center;
-  width: 100%;
-
+.content-area {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  background-color: #f5f7fa;
 }
 
 .map-wrapper {
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
-  margin-right: calc(-50vw + 50%);
-  padding: 0 20px;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
   box-sizing: border-box;
-  flex-shrink: 0;
 }
 
 .map-wrapper .map-container {
   width: 100%;
-  aspect-ratio: 2;
-  height: auto;
+  height: 100%;
 }
 
-.home-card {
-  width: auto;
-  padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  background-color: #fff;
-  flex-shrink: 0;
+.audit-page-wrapper {
+  width: 100%;
+  height: 100%;
 }
+
 :global(body),
 :global(html) {
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* 可选：禁用横向滚动 */
-  /* 不要设置 overflow-y: hidden，否则浏览器滚动条也会被禁用 */
+  overflow-x: hidden;
 }
 </style>

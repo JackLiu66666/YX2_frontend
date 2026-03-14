@@ -2,14 +2,6 @@
   <div class="audit-container">
     <!-- 顶部返回按钮 -->
     <div class="header">
-      <el-button 
-        type="primary" 
-        icon="el-icon-arrow-left" 
-        @click="goBack"
-        class="back-btn"
-      >
-        返回
-      </el-button>
       <h2 class="page-title">代理商申请列表</h2>
     </div>
 
@@ -101,10 +93,6 @@ const pageSize = ref(20)    // 每页条数
 const total = ref(0)       // 总条数
 const applyList = ref([])  // 申请列表数据
 
-// 返回首页
-const goBack = () => {
-  router.push('home')
-}
 
 // 查看详细信息
 const viewDetail = (id) => {
