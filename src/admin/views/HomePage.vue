@@ -12,7 +12,9 @@
     <el-main>
       <div class="main-content">
         <!-- 地图组件 -->
-        <AgencyMap />
+        <div class="map-wrapper">
+          <AgencyMap />
+        </div>
 
         <!-- 按钮区域 -->
         <el-card class="home-card">
@@ -68,9 +70,10 @@ export default {
 
 <style scoped>
 .home-container {
-  height: 100vh;
+  
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 
 .el-header {
@@ -79,11 +82,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .el-main {
   padding: 20px;
-  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .main-content {
@@ -91,9 +97,23 @@ export default {
   flex-direction: column;
   gap: 20px;
   align-items: center;
-  max-width: 1400px;
-  margin: 0 auto;
   width: 100%;
+
+}
+
+.map-wrapper {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  padding: 0 20px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.map-wrapper .map-container {
+  width: 100%;
+  aspect-ratio: 2;
+  height: auto;
 }
 
 .home-card {
@@ -102,5 +122,13 @@ export default {
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   background-color: #fff;
+  flex-shrink: 0;
+}
+:global(body),
+:global(html) {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* 可选：禁用横向滚动 */
+  /* 不要设置 overflow-y: hidden，否则浏览器滚动条也会被禁用 */
 }
 </style>

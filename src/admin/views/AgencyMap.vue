@@ -434,7 +434,7 @@ export default {
 .map-container {
   position: relative;
   width: 100%;
-  height: 800px;
+  height: 100%;
   background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
