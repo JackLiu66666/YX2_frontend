@@ -28,10 +28,15 @@
             <el-icon><Location /></el-icon>
             <span>全国服务网络布局地图</span>
           </el-menu-item>
+          <el-menu-item index="business">
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>业务范围布局列表</span>
+          </el-menu-item>
           <el-menu-item index="audit">
             <el-icon><Document /></el-icon>
             <span>代理商申请审核</span>
           </el-menu-item>
+
         </el-menu>
       </el-aside>
 
@@ -46,6 +51,11 @@
         <div v-if="activeMenu === 'audit'" class="audit-page-wrapper">
           <AgencyAuditPage />
         </div>
+
+        <!-- 业务范围代理商页面 -->
+        <div v-if="activeMenu === 'business'" class="business-page-wrapper">
+          <BusinessAgency />
+        </div>
       </el-main>
     </div>
   </div>
@@ -55,15 +65,18 @@
 import request from "@/utils/request";
 import AgencyMap from "@/admin/views/AgencyMap.vue";
 import AgencyAuditPage from "@/admin/views/AgencyAuditPage.vue";
-import { Location, Document } from "@element-plus/icons-vue";
+import BusinessAgency from "@/admin/views/BusinessAgency.vue";
+import { Location, Document, OfficeBuilding } from "@element-plus/icons-vue";
 
 export default {
   name: "Home",
   components: {
     AgencyMap,
     AgencyAuditPage,
+    BusinessAgency,
     Location,
-    Document
+    Document,
+    OfficeBuilding
   },
   data() {
     return {
@@ -132,6 +145,7 @@ export default {
 }
 
 .logout-btn {
+  margin-left: 10px;
   color: #409EFF;
   font-size: 14px;
 }
@@ -143,7 +157,7 @@ export default {
 }
 
 .sidebar {
-  width: 240px;
+  width: 220px;
   background-color: #304156;
   overflow-y: auto;
   flex-shrink: 0;
@@ -174,6 +188,11 @@ export default {
 }
 
 .audit-page-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.business-page-wrapper {
   width: 100%;
   height: 100%;
 }
