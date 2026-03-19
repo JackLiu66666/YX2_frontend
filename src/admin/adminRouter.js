@@ -9,27 +9,32 @@ const adminRoutes = [
   {
     path: 'login',
     name: 'Login Page',
-    component: LoginPage
+    component: LoginPage,
+    meta: { title: '管理员登录' }
   },
   {
     path: 'home',
     name: 'Home Page',
-    component: HomePage
+    component: HomePage,
+    meta: { title: '管理员首页' }
   },
   {
     path: 'agencyAudit',
     name: 'Agency Audit Page',
-    component: AgencyAuditPage
+    component: AgencyAuditPage,
+    meta: { title: '代理商审核' }
   },
   {
     path: 'insuranceCompanyAudit',
     name: 'Insurance Company Audit Page',
-    component: InsuranceCompanyAuditPage
+    component: InsuranceCompanyAuditPage,
+    meta: { title: '保险公司审核' }
   },
   {
     path: 'agencyApplicationReview/:id',
     name: 'Agency Application Review',
     component: AgencyApplicationReview,
+    meta: { title: '代理商申请审核' },
     props: true
   }
 ]

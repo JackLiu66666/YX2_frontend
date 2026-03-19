@@ -48,12 +48,12 @@ export default {
           try {
             // 调用后端登录接口
             const res = await request.post('/admin/login', this.loginForm)
-            if (res.data.code === 200) {
+            if (res.code === 200) {
               this.$message.success('登录成功！')
               // 跳转到后台首页
               this.$router.push('/admin/home')
             } else {
-              this.$message.error(res.data.msg)
+              this.$message.error(res.msg)
             }
           } catch (error) {
             this.$message.error('登录失败，请检查网络或后端服务！')

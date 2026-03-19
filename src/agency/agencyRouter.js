@@ -15,42 +15,44 @@ const agencyRoutes = [
   {
     path: 'login',
     name: 'AgencyLogin',
-    component: Login
+    component: Login,
+    meta: { title: '代理商登录'}
   },
   {
     path: 'register',
     name: 'AgencyRegister',
-    component: Register
+    component: Register,
+    meta: { title: '代理商注册'}
   },
   {
     path: 'index',
     name: 'AgencyIndex',
     component: AgentIndex,
-    meta: { requiresAuth: true } // 标记需要登录的路由
+    meta: { requiresAuth: true, title: '代理商首页' } // 标记需要登录的路由
   },
   {
     path: 'audit-application',
     name: 'AgencyAuditApplication',
     component: AgencyAuditApplication,
-    meta: { requiresAuth: true, requiredStatus: 0 } // 需要审核状态为0
+    meta: { requiresAuth: true, requiredStatus: 0, title: '代理商审核申请' } // 需要审核状态为0
   },
   {
     path: 'audit-status',
     name: 'AgencyAuditStatus',
     component: AgencyAuditStatus,
-    meta: { requiresAuth: true, requiredStatus: 1 } // 需要审核状态为1
+    meta: { requiresAuth: true, requiredStatus: 1,  title: '代理商审核状态' } // 需要审核状态为1
   },
   {
     path: 'audit-pass-materials',
     name: 'AgencyAuditPassMaterials',
     component: AgencyAuditPassMaterials,
-    meta: { requiresAuth: true, requiredStatus: 2 } // 需要审核状态为2
+    meta: { requiresAuth: true, requiredStatus: 2, title: '代理商审核通过材料' } // 需要审核状态为2
   },
   {
     path: 'audit-fail-reason',
     name: 'AgencyAuditFailReason',
     component: AgencyAuditFailReason,
-    meta: { requiresAuth: true, requiredStatus: 3 } // 需要审核状态为3
+    meta: { requiresAuth: true, requiredStatus: 3, title: '代理商审核失败原因' } // 需要审核状态为3
   }
 ]
 
