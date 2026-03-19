@@ -22,7 +22,7 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
-import request from '../../utils/request'
+import request from '@/utils/request'
 
 const router = useRouter()
 const loginFormRef = ref(null)

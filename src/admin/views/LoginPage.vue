@@ -18,6 +18,7 @@
 </template>
 
 <script>
+import request from '@/utils/request'
 export default {
   name: 'Login',
   data() {
@@ -46,7 +47,7 @@ export default {
         if (valid) {
           try {
             // 调用后端登录接口
-            const res = await this.$axios.post('/api/v1/admin/login', this.loginForm)
+            const res = await request.post('/admin/login', this.loginForm)
             if (res.data.code === 200) {
               this.$message.success('登录成功！')
               // 跳转到后台首页
