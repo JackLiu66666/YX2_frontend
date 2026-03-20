@@ -18,6 +18,7 @@
 <script>
 import * as echarts from "echarts";
 import request from "@/utils/request";
+import chinaMapJson from '@/assets/maps/china-map.json';
 
 export default {
   name: "AgencyMap",
@@ -58,28 +59,72 @@ export default {
         this.provincesWithAgency = [];
       }
     },
-    async loadChinaMap() {
-      try {
-        const response = await fetch("https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json");
-        this.chinaJson = await response.json();
-        echarts.registerMap("china", this.chinaJson);
-      } catch (error) {
-        console.error("加载中国地图失败:", error);
-      }
+    loadChinaMap() {
+      // 使用 import 导入的地图数据，无需异步加载
+      this.chinaJson = chinaMapJson;
+      echarts.registerMap("china", this.chinaJson);
     },
     async loadProvinceMap(provinceName) {
       try {
-        const adcode = this.getProvinceAdcode(provinceName);
-        if (!adcode) {
-          console.error("未找到省份编码:", provinceName);
+        // 将省份名称转换为小写拼音文件名
+        const provinceFileName = this.getProvinceFileName(provinceName);
+        if (!provinceFileName) {
+          console.error(`未找到 ${provinceName} 对应的地图文件`);
           return;
         }
-        const response = await fetch(`https://geo.datav.aliyun.com/areas_v3/bound/${adcode}_full.json`);
-        this.provinceJson = await response.json();
-        echarts.registerMap(provinceName, this.provinceJson);
+        
+        // 从本地加载省份地图数据
+        try {
+          const module = await import(`@/assets/maps/provinces/${provinceFileName}.json`);
+          this.provinceJson = module.default;
+          echarts.registerMap(provinceName, this.provinceJson);
+        } catch (importError) {
+          console.warn(`加载${provinceName}地图文件失败，使用全国地图:`, importError);
+          throw importError;
+        }
       } catch (error) {
-        console.error("加载省份地图失败:", error);
+        console.error("加载省份地图异常:", error);
       }
+    },
+    getProvinceFileName(provinceName) {
+      // 省份名称到文件名的映射（小写拼音）
+      const provinceFileMap = {
+        北京市: 'beijing',
+        天津市: 'tianjin',
+        河北省: 'hebei',
+        山西省: 'shanxi',
+        内蒙古自治区: 'neimenggu',
+        辽宁省: 'liaoning',
+        吉林省: 'jilin',
+        黑龙江省: 'heilongjiang',
+        上海市: 'shanghai',
+        江苏省: 'jiangsu',
+        浙江省: 'zhejiang',
+        安徽省: 'anhui',
+        福建省: 'fujian',
+        江西省: 'jiangxi',
+        山东省: 'shandong',
+        河南省: 'henan',
+        湖北省: 'hubei',
+        湖南省: 'hunan',
+        广东省: 'guangdong',
+        广西壮族自治区: 'guangxi',
+        海南省: 'hainan',
+        重庆市: 'chongqing',
+        四川省: 'sichuan',
+        贵州省: 'guizhou',
+        云南省: 'yunnan',
+        西藏自治区: 'xizang',
+        陕西省: 'shaanxi',
+        甘肃省: 'gansu',
+        青海省: 'qinghai',
+        宁夏回族自治区: 'ningxia',
+        新疆维吾尔自治区: 'xinjiang',
+        台湾省: 'taiwan',
+        香港特别行政区: 'xianggang',
+        澳门特别行政区: 'aomen',
+      };
+      return provinceFileMap[provinceName] || null;
     },
     getProvinceAdcode(provinceName) {
       const provinceAdcodes = {
