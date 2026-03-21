@@ -78,14 +78,9 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiredStatus !== undefined) {
     try {
       // 调用新接口获取 auditStatus
-      const res = await request.get("/agencyAuditApplication/audit-status");
-      // 假设返回格式为 { code: 200, data: { auditStatus: 1 } }
+      const res = await request.get("/agency/getAgencyauditStatus");
+      // 返回格式为 { code: 200, msg: "操作成功", data: 2 }
       const realStatus = res.data;
-
-      // 可选：更新本地存储的 auditStatus（用于其他地方展示）
-      const localAgent = JSON.parse(localStorage.getItem("loginAgency") || "{}");
-      localAgent.auditStatus = realStatus;
-      localStorage.setItem("loginAgency", JSON.stringify(localAgent));
 
       // 判断权限
       const required = to.meta.requiredStatus;
@@ -107,8 +102,7 @@ router.beforeEach(async (to, from, next) => {
     } catch (error) {
       // 请求失败（可能是 401 或网络错误）
       if (error.response?.status === 401) {
-        // session 过期，清除本地存储并跳转登录
-        localStorage.removeItem("loginAgency");
+        // session 过期，跳转登录
         ElMessage.warning("登录已过期，请重新登录");
         next("/agency/login");
       } else {

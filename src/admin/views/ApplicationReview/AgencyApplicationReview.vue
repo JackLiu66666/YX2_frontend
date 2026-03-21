@@ -2,12 +2,8 @@
   <div class="application-review-container">
     <!-- 顶部返回按钮 -->
     <div class="header">
-      <el-button 
-        type="primary" 
-        icon="el-icon-arrow-left" 
-        @click="goBack"
-        class="back-btn"
-      >
+      <el-button type="primary" @click="goBack" class="back-btn">
+        <el-icon><ArrowLeftBold /></el-icon>
         返回
       </el-button>
     </div>
@@ -227,7 +223,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute} from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ArrowDown } from '@element-plus/icons-vue';
+import { ArrowDown, ArrowLeftBold } from '@element-plus/icons-vue';
 import request from '@/utils/request';
 
 // 响应式数据

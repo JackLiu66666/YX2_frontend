@@ -2,7 +2,10 @@
   <div class="audit-application-page">
     <!-- 页面头部 -->
     <div class="page-header">
-      <el-button type="primary" @click="goBack" icon="el-icon-arrow-left">返回首页</el-button>
+      <el-button type="primary" @click="goBack">
+        <el-icon><ArrowLeftBold /></el-icon>
+        返回首页
+      </el-button>
       <h1>代理商合作审核申请表</h1>
     </div>
 
@@ -254,6 +257,7 @@
 import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { ArrowLeftBold } from '@element-plus/icons-vue';
 import request from "../../../utils/request";
 import dayjs from 'dayjs'
 

@@ -42,6 +42,15 @@
       <div class="content-area">
         <component :is="currentComponent" />
       </div>
+      
+      <!-- 锁定遮罩层 -->
+      <div v-if="isLocked" class="lock-overlay">
+        <div class="lock-content">
+          <el-icon class="lock-icon"><Lock /></el-icon>
+          <div class="lock-text">该功能暂不可用</div>
+          <div class="lock-subtext">请等待审核通过后使用</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -49,7 +58,7 @@
 <script setup>
 import { ref, onMounted, computed, markRaw } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Briefcase, List } from '@element-plus/icons-vue'
+import { Briefcase, List, Lock } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import request from '../../utils/request'
 
@@ -57,6 +66,8 @@ const router = useRouter()
 const agentInfo = ref({})
 const loading = ref(true)
 const activeMenu = ref('business')
+const auditStatus = ref(null) // 审核状态
+const isLocked = ref(false) // 是否锁定
 
 // 空组件占位
 const BusinessModule = { template: '<div style="padding: 20px;"><h2>业务模块</h2><p>该模块待开发...</p></div>' }
@@ -69,7 +80,29 @@ const componentMap = {
 
 const currentComponent = computed(() => componentMap[activeMenu.value])
 
+// 获取审核状态
+const fetchAuditStatus = async () => {
+  try {
+    const response = await request.get('/agency/getAgencyauditStatus')
+    if (response.code === 200) {
+      auditStatus.value = response.data
+      // 只有状态为 2（通过）才不锁定
+      isLocked.value = response.data !== 2
+    } else {
+      ElMessage.error('获取审核状态失败')
+      isLocked.value = true
+    }
+  } catch (error) {
+    ElMessage.error('网络错误，请稍后重试')
+    isLocked.value = true
+    if (error.response?.status === 401) {
+      router.push('login')
+    }
+  }
+}
+
 onMounted(async () => {
+  // 先获取用户信息
   try {
     const response = await request.get('/agency/index')
     if (response.code === 200) {
@@ -85,16 +118,19 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  
+  // 获取审核状态并控制锁定
+  await fetchAuditStatus()
 })
 
 const statusTagType = computed(() => {
   const map = { 0: 'info', 1: 'warning', 2: 'success', 3: 'danger' }
-  return map[agentInfo.value?.auditStatus] ?? 'info'
+  return map[auditStatus.value] ?? 'info'
 })
 
 const statusText = computed(() => {
   const map = { 0: '未审核', 1: '待审核', 2: '审核通过', 3: '审核不通过' }
-  return map[agentInfo.value?.auditStatus] ?? '未知'
+  return map[auditStatus.value] ?? '未知'
 })
 
 const handleStatusClick = () => {
@@ -102,7 +138,7 @@ const handleStatusClick = () => {
     ElMessage.info('正在加载用户信息，请稍后...')
     return
   }
-  const currentStatus = agentInfo.value?.auditStatus
+  const currentStatus = auditStatus.value
   if (currentStatus === undefined || currentStatus === null) {
     ElMessage.error('用户审核状态未获取，请重新登录')
     router.push('login')
@@ -152,7 +188,7 @@ const handleLogout = async () => {
 }
 
 .header {
-  height: 60px;
+  height: 80px;
   background-color: #fff;
   border-bottom: 1px solid #e6e6e6;
   display: flex;
@@ -163,7 +199,7 @@ const handleLogout = async () => {
 }
 
 .system-title {
-  font-size: 18px;
+  font-size: 26px;
   font-weight: bold;
   color: #409EFF;
   margin: 0;
@@ -177,11 +213,15 @@ const handleLogout = async () => {
 
 .welcome-text {
   color: #606266;
-  font-size: 14px;
+  margin-right: 16px;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .status-tag {
   cursor: pointer;
+  margin-top: 0;
+  transform: scale(1.1);
 }
 
 .status-tag.is-disabled {
@@ -191,12 +231,15 @@ const handleLogout = async () => {
 
 .logout-btn {
   margin-left: 8px;
+  font-size: 15px;
+  padding: 8px 12px;
 }
 
 .main-container {
   flex: 1;
   display: flex;
   overflow: hidden;
+  position: relative;
 }
 
 .sidebar {
@@ -234,6 +277,42 @@ const handleLogout = async () => {
 }
 
 .content-area p {
+  color: #909399;
+}
+
+/* 锁定遮罩层样式 */
+.lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.lock-content {
+  text-align: center;
+}
+.lock-icon {
+  font-size: 80px;
+  color: #c0c4cc;
+  margin-bottom: 16px;
+}
+
+.lock-text {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #606266;
+}
+
+.lock-subtext {
+  font-size: 14px;
   color: #909399;
 }
 </style>
