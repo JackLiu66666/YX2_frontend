@@ -36,9 +36,7 @@
             <el-col :span="12">
               <el-form-item label="机构类型" prop="agencyType">
                 <el-select v-model="applicationForm.agencyType" placeholder="请选择机构类型">
-                  <el-option label="保险代理" value="保险代理" />
-                  <el-option label="保险经纪" value="保险经纪" />
-                  <el-option label="渠道代理" value="渠道代理" />
+                  <el-option label="代理公司" value="代理代理公司" />
                   <el-option label="其他" value="其他" />
                 </el-select>
               </el-form-item>
@@ -570,7 +568,7 @@ const fillTestData = () => {
     agencyFullName: '云测科技有限公司',
     socialCreditCode: '91310115MA1H2Y9P6X',
     registeredAddress: '上海市浦东新区松涛路 666 号',
-    agencyType: '保险代理',                // 改为与选项匹配的值
+    agencyType: '代理公司',                // 改为与选项匹配的值
     businessLicenseNo: '沪 B2-20230123',
     licenseValidRange: [
       new Date(),
@@ -595,7 +593,6 @@ const fillTestData = () => {
 
   // 设置测试用的合作区域
   cooperationAreaList.value = [
-    { province: '广东省', city: '广州市', hospitalIds: [1, 2, 3] },
     { province: '广东省', city: '深圳市', hospitalIds: [] }
   ];
 
