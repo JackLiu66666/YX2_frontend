@@ -227,10 +227,10 @@
           </el-form-item>
 
           <el-form-item label="申请单位盖章" prop="sealFile">
-            <el-upload ref="sealFileUpload" :auto-upload="false" :file-list="sealFileList" accept=".jpg,.png,.pdf" :on-change="handleFileChange">
+            <el-upload ref="sealFileUpload" :auto-upload="false" :file-list="sealFileList" accept=".jpg,.jpeg,.png" :on-change="handleFileChange">
               <el-button type="primary" icon="el-icon-upload">选择文件</el-button>
               <template #tip>
-                <div class="el-upload__tip">请上传盖章扫描件（jpg/png/pdf，大小不超过10MB）</div>
+                <div class="el-upload__tip">请上传盖章扫描件（jpg/png 格式，大小不超过 10MB）</div>
               </template>
             </el-upload>
           </el-form-item>

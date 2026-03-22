@@ -230,17 +230,45 @@ const handleStatusClick = () => {
     router.push('login')
     return
   }
-  const routeMap = {
-    0: 'AgencyAuditApplication',
-    1: 'AgencyAuditStatus',
-    2: 'AgencyAuditPassMaterials',
-    3: 'AgencyAuditFailReason'
+  
+  // 状态 0 和 2 跳转到对应页面
+  if (currentStatus === 0 || currentStatus === 2) {
+    const routeMap = {
+      0: 'AgencyAuditApplication',
+      2: 'AgencyAuditPassMaterials'
+    }
+    const targetRoute = routeMap[currentStatus]
+    if (targetRoute) {
+      router.push({ name: targetRoute })
+    } else {
+      ElMessage.warning('未知状态，无法跳转')
+    }
+  } 
+  // 状态 1：审核中，弹窗提示
+  else if (currentStatus === 1) {
+    ElMessageBox.alert(
+      '您的申请正在审核中，请耐心等待审核结果。审核通过后您将收到通知，感谢您的配合！',
+      '审核提示',
+      {
+        confirmButtonText: '我知道了',
+        type: 'info'
+      }
+    )
   }
-  const targetRoute = routeMap[currentStatus]
-  if (targetRoute) {
-    router.push({ name: targetRoute })
-  } else {
-    ElMessage.warning('未知状态，无法跳转')
+  // 状态 3：审核不通过，弹窗提示
+  else if (currentStatus === 3) {
+    ElMessageBox.alert(
+      '很抱歉，您的申请审核未通过。请查看失败原因并重新提交申请，如有疑问请联系客服。',
+      '审核结果通知',
+      {
+        confirmButtonText: '我知道了',
+        type: 'warning'
+      }
+    )
+  }
+  // 其他未知状态
+  else {
+    ElMessage.warning('未知状态，无法处理')
   }
 }
 
