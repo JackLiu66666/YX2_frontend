@@ -19,7 +19,7 @@
     </div>
     
     <!-- 主体内容区 -->
-    <div class="main-container">
+    <div v-if="pageLoaded" class="main-container">
       <!-- 左侧导航栏 -->
       <div class="sidebar">
         <el-menu
@@ -63,13 +63,21 @@
         </div>
       </div>
     </div>
+    
+    <!-- 页面加载中提示 -->
+    <div v-else class="loading-container">
+      <div class="loading-content">
+        <el-icon class="loading-icon"><Loading /></el-icon>
+        <div class="loading-text">页面加载中...</div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, markRaw, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Briefcase, List, Lock } from '@element-plus/icons-vue'
+import { Briefcase, List, Lock, Loading } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import request from '../../utils/request'
 import CommonBusinessList from './business/CommonBusinessList.vue'
@@ -77,6 +85,7 @@ import CommonBusinessList from './business/CommonBusinessList.vue'
 const router = useRouter()
 const agentInfo = ref({})
 const loading = ref(true)
+const pageLoaded = ref(false) // 页面是否加载完成
 const activeMenu = ref('hospital-accompaniment-diagnosis')
 const auditStatus = ref(null) // 审核状态
 const isLocked = ref(false) // 是否锁定
@@ -207,6 +216,9 @@ onMounted(async () => {
     // 审核未通过时，禁用所有业务模块
     setAllModulesDisabled()
   }
+  
+  // 两个函数都执行完成后，显示页面
+  pageLoaded.value = true
 })
 
 const statusTagType = computed(() => {
@@ -467,6 +479,40 @@ currentModuleName.value = getModuleName(activeMenu.value)
 
 .content-area p {
   color: #909399;
+}
+
+/* 页面加载中容器 */
+.loading-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f7fa;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-icon {
+  font-size: 64px;
+  color: #409EFF;
+  animation: rotating 2s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading-text {
+  font-size: 16px;
+  color: #909399;
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 锁定遮罩层样式 */
