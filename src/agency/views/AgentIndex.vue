@@ -27,10 +27,21 @@
           class="side-menu"
           @select="handleMenuSelect"
         >
-          <el-menu-item index="business">
-            <el-icon><Briefcase /></el-icon>
-            <span>业务模块</span>
-          </el-menu-item>
+          <el-sub-menu index="business">
+            <template #title>
+              <el-icon><Briefcase /></el-icon>
+              <span>业务模块</span>
+            </template>
+            <el-menu-item 
+              v-for="module in businessModules" 
+              :key="module.index"
+              :index="module.index"
+              :disabled="!module.enabled"
+            >
+              {{ module.name }}
+              <span v-if="!module.enabled" class="module-not-enabled">未开通</span>
+            </el-menu-item>
+          </el-sub-menu>
           <el-menu-item index="orders">
             <el-icon><List /></el-icon>
             <span>订单记录</span>
@@ -40,7 +51,7 @@
       
       <!-- 右侧内容区 -->
       <div class="content-area">
-        <component :is="currentComponent" />
+        <component :is="currentComponent" :module-name="currentModuleName" />
       </div>
       
       <!-- 锁定遮罩层 -->
@@ -56,25 +67,32 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, markRaw } from 'vue'
+import { ref, onMounted, computed, markRaw, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Briefcase, List, Lock } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import request from '../../utils/request'
+import CommonBusinessList from './business/CommonBusinessList.vue'
 
 const router = useRouter()
 const agentInfo = ref({})
 const loading = ref(true)
-const activeMenu = ref('business')
+const activeMenu = ref('hospital-accompaniment-diagnosis')
 const auditStatus = ref(null) // 审核状态
 const isLocked = ref(false) // 是否锁定
+const currentModuleName = ref('院陪诊')
+const businessModules = ref([]) // 业务范围模块列表
 
 // 空组件占位
-const BusinessModule = { template: '<div style="padding: 20px;"><h2>业务模块</h2><p>该模块待开发...</p></div>' }
 const OrderRecords = { template: '<div style="padding: 20px;"><h2>订单记录</h2><p>该模块待开发...</p></div>' }
 
 const componentMap = {
-  business: markRaw(BusinessModule),
+  'hospital-accompaniment-diagnosis': markRaw(CommonBusinessList),
+  'hospital-accompaniment-care': markRaw(CommonBusinessList),
+  'hospital-office': markRaw(CommonBusinessList),
+  'hospital-insurance': markRaw(CommonBusinessList),
+  'hospital-advance': markRaw(CommonBusinessList),
+  'hospital-visit': markRaw(CommonBusinessList),
   orders: markRaw(OrderRecords)
 }
 
@@ -101,6 +119,66 @@ const fetchAuditStatus = async () => {
   }
 }
 
+// 获取业务范围
+const fetchBusinessScope = async () => {
+  try {
+    const response = await request.get('/agency/getAgencyBusinessScope')
+    if (response.code === 200) {
+      // 解析返回的业务范围代码数组
+      const scopeCodes = JSON.parse(response.data)
+      
+      // 定义所有可用的业务模块
+      const allModules = [
+        { index: 'hospital-accompaniment-diagnosis', name: '院陪诊', code: '1' },
+        { index: 'hospital-accompaniment-care', name: '院陪护', code: '2' },
+        { index: 'hospital-office', name: '院办办', code: '3' },
+        { index: 'hospital-insurance', name: '院保保', code: '4' },
+        { index: 'hospital-advance', name: '院垫垫', code: '5' },
+        { index: 'hospital-visit', name: '院探探', code: '6' }
+      ]
+      
+      // 根据返回的代码标记模块是否可用
+      businessModules.value = allModules.map(module => ({
+        ...module,
+        enabled: scopeCodes.includes(module.code)
+      }))
+      
+      // 如果当前激活的模块不可用，切换到第一个可用的模块
+      const currentModule = businessModules.value.find(m => m.index === activeMenu.value)
+      if (!currentModule?.enabled) {
+        const firstEnabledModule = businessModules.value.find(m => m.enabled)
+        if (firstEnabledModule) {
+          activeMenu.value = firstEnabledModule.index
+          currentModuleName.value = firstEnabledModule.name
+        }
+      }
+    } else {
+      ElMessage.error('获取业务范围失败')
+      // 如果接口失败，默认全部禁用
+      setAllModulesDisabled()
+    }
+  } catch (error) {
+    ElMessage.error('网络错误，请稍后重试')
+    setAllModulesDisabled()
+    if (error.response?.status === 401) {
+      router.push('login')
+    }
+  }
+}
+
+// 设置所有模块为禁用状态
+const setAllModulesDisabled = () => {
+  const allModules = [
+    { index: 'hospital-accompaniment-diagnosis', name: '院陪诊', enabled: false },
+    { index: 'hospital-accompaniment-care', name: '院陪护', enabled: false },
+    { index: 'hospital-office', name: '院办办', enabled: false },
+    { index: 'hospital-insurance', name: '院保保', enabled: false },
+    { index: 'hospital-advance', name: '院垫垫', enabled: false },
+    { index: 'hospital-visit', name: '院探探', enabled: false }
+  ]
+  businessModules.value = allModules
+}
+
 onMounted(async () => {
   // 先获取用户信息
   try {
@@ -121,6 +199,14 @@ onMounted(async () => {
   
   // 获取审核状态并控制锁定
   await fetchAuditStatus()
+  
+  // 只有审核通过（状态为 2）才获取业务范围
+  if (auditStatus.value === 2) {
+    await fetchBusinessScope()
+  } else {
+    // 审核未通过时，禁用所有业务模块
+    setAllModulesDisabled()
+  }
 })
 
 const statusTagType = computed(() => {
@@ -159,7 +245,30 @@ const handleStatusClick = () => {
 }
 
 const handleMenuSelect = (index) => {
-  activeMenu.value = index
+  // 只有启用的菜单才能切换
+  const selectedModule = businessModules.value.find(m => m.index === index)
+  if (selectedModule && selectedModule.enabled) {
+    nextTick(() => {
+      activeMenu.value = index
+      currentModuleName.value = getModuleName(index)
+    })
+  } else {
+    ElMessage.warning('该模块暂未开通')
+  }
+}
+
+// 获取模块名称映射
+const getModuleName = (index) => {
+  const map = {
+    'hospital-accompaniment-diagnosis': '院陪诊',
+    'hospital-accompaniment-care': '院陪护',
+    'hospital-office': '院办办',
+    'hospital-insurance': '院保保',
+    'hospital-advance': '院垫垫',
+    'hospital-visit': '院探探',
+    'orders': '订单记录'
+  }
+  return map[index] || '业务模块'
 }
 
 const handleLogout = async () => {
@@ -176,6 +285,9 @@ const handleLogout = async () => {
     ElMessage.info('已取消退出')
   }
 }
+
+// 初始化模块名称
+currentModuleName.value = getModuleName(activeMenu.value)
 </script>
 
 <style scoped>
@@ -252,6 +364,8 @@ const handleLogout = async () => {
 .side-menu {
   height: 100%;
   border-right: none;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .side-menu:not(.el-menu--horizontal) .el-menu-item {
@@ -262,6 +376,53 @@ const handleLogout = async () => {
 .side-menu:not(.el-menu--horizontal) .el-menu-item.is-active {
   background-color: #ecf5ff;
   color: #409EFF;
+}
+
+/* 业务范围模块未开通标签样式 */
+.side-menu .el-menu-item {
+  position: relative;
+}
+
+.module-not-enabled {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #ff4d4f;
+  background-color: #fff1f0;
+  padding: 3px 8px;
+  border-radius: 4px;
+  line-height: 1.2;
+  font-weight: 500;
+  border: 1px solid #ffa39e;
+  box-shadow: 0 2px 4px rgba(255, 77, 79, 0.2);
+  animation: pulse-light 2s infinite;
+}
+
+@keyframes pulse-light {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.side-menu .el-menu-item.is-disabled {
+  color: #777777;
+  cursor: not-allowed;
+  background-color: #fafafa;
+}
+
+.side-menu .el-menu-item.is-disabled:hover {
+  background-color: #f5f5f5;
+}
+
+.side-menu .el-menu-item.is-disabled .module-not-enabled {
+  color: #ff4d4f;
+  background-color: #fff1f0;
+  border-color: #ff7875;
 }
 
 .content-area {

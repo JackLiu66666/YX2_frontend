@@ -12,6 +12,7 @@ module.exports = defineConfig({
         changeOrigin: true,            // 支持跨域
         logLevel: 'debug'
       }
-    }
+    },
+     client: {overlay: false},
   }
 })
