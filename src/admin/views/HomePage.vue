@@ -36,7 +36,38 @@
             <el-icon><Document /></el-icon>
             <span>代理商申请审核</span>
           </el-menu-item>
-
+          <el-sub-menu index="organization-management">
+            <template #title>
+              <el-icon><Setting /></el-icon>
+              <span>机构与人员管理</span>
+            </template>
+            <el-menu-item index="admin-management">
+              <el-icon><User /></el-icon>
+              <span>管理员管理</span>
+            </el-menu-item>
+            <el-menu-item index="agency-management">
+              <el-icon><Shop /></el-icon>
+              <span>代理商管理</span>
+            </el-menu-item>
+            <el-menu-item index="insurance-company-management">
+              <el-icon><DataLine /></el-icon>
+              <span>保险公司管理</span>
+            </el-menu-item>
+          </el-sub-menu>
+          <el-sub-menu index="hospital-data">
+            <template #title>
+              <el-icon><DataAnalysis /></el-icon>
+              <span>医院数据分析</span>
+            </template>
+            <el-menu-item index="hospital-data-list">
+              <el-icon><Document /></el-icon>
+              <span>医院数据列表</span>
+            </el-menu-item>
+            <el-menu-item index="hospital-data-rank">
+              <el-icon><TrendCharts /></el-icon>
+              <span>医院星级排行</span>
+            </el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </el-aside>
 
@@ -52,9 +83,34 @@
           <AgencyAuditPage />
         </div>
 
+        <!-- 管理员管理页面 -->
+        <div v-if="activeMenu === 'admin-management'" class="admin-management-wrapper">
+          <AdminManagement />
+        </div>
+
+        <!-- 代理商管理页面 -->
+        <div v-if="activeMenu === 'agency-management'" class="agency-management-wrapper">
+          <AgencyManagement />
+        </div>
+
+        <!-- 保险公司管理页面 -->
+         <div v-if="activeMenu === 'insurance-company-management'" class="insurance-company-management-wrapper">
+          <InsuranceCompanyManagement />
+        </div>
+
         <!-- 业务范围代理商页面 -->
         <div v-if="activeMenu === 'business'" class="business-page-wrapper">
           <BusinessAgency />
+        </div>
+
+        <!-- 医院数据列表页面 -->
+        <div v-if="activeMenu === 'hospital-data-list'" class="hospital-data-wrapper">
+          <HospitalDataList />
+        </div>
+
+        <!-- 医院星级排行页面 -->
+        <div v-if="activeMenu === 'hospital-data-rank'" class="hospital-rank-wrapper">
+          <HospitalRank />
         </div>
       </el-main>
     </div>
@@ -66,7 +122,12 @@ import request from "@/utils/request";
 import AgencyMap from "@/admin/views/AgencyMap.vue";
 import AgencyAuditPage from "@/admin/views/AgencyAuditPage.vue";
 import BusinessAgency from "@/admin/views/BusinessAgency.vue";
-import { Location, Document, OfficeBuilding } from "@element-plus/icons-vue";
+import HospitalDataList from "@/admin/views/HospitalData/HospitalDataList.vue";
+import HospitalRank from "@/admin/views/HospitalData/HospitalRank.vue";
+import AdminManagement from "@/admin/views/Management/AdminManagement.vue";
+import AgencyManagement from "@/admin/views/Management/AgencyManagement.vue";
+import InsuranceCompanyManagement from "@/admin/views/Management/InsuranceCompanyManagement.vue";
+import { Location, Document, OfficeBuilding, DataAnalysis, Setting, User, Shop, DataLine, TrendCharts } from "@element-plus/icons-vue";
 
 export default {
   name: "Home",
@@ -74,9 +135,20 @@ export default {
     AgencyMap,
     AgencyAuditPage,
     BusinessAgency,
+    HospitalDataList,
+    HospitalRank,
+    AdminManagement,
+    AgencyManagement,
+    InsuranceCompanyManagement,
     Location,
     Document,
-    OfficeBuilding
+    OfficeBuilding,
+    DataAnalysis,
+    Setting,
+    User,
+    Shop,
+    DataLine,
+    TrendCharts
   },
   data() {
     return {
@@ -193,6 +265,33 @@ export default {
 }
 
 .business-page-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.hospital-data-wrapper {
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.hospital-rank-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.admin-management-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.agency-management-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.insurance-company-management-wrapper {
   width: 100%;
   height: 100%;
 }

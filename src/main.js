@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import axios from 'axios'
 
 const app = createApp(App)
@@ -17,7 +18,9 @@ app.config.globalProperties.$axios = axios
 
 // 使用插件
 app.use(router)
-app.use(ElementPlus)
+app.use(ElementPlus, {
+  locale: zhCn, // 设置中文语言包
+})
 
 // 挂载应用
 app.mount('#app')
